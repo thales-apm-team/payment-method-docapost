@@ -2,12 +2,17 @@ package com.payline.payment.docapost.bean.rest.request.signature;
 
 import static com.payline.payment.docapost.utils.DocapostConstants.*;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.payline.payment.docapost.TmpTestData;
 import com.payline.payment.docapost.bean.rest.request.WSSignature;
 import com.payline.payment.docapost.exception.InvalidRequestException;
+import com.payline.payment.docapost.utils.DocapostLocalParam;
+import com.payline.payment.docapost.utils.DocapostUtils;
+import com.payline.pmapi.bean.payment.ContractProperty;
+import com.payline.pmapi.bean.payment.request.PaymentRequest;
 
 /**
  * Created by Thales on 29/08/2018.
@@ -63,29 +68,44 @@ public class SendOtpRequest extends WSSignatureRequest implements WSSignature {
     //***** BUILDER
     public static final class Builder {
 
-        public SendOtpRequest fromPaylineRequest(/*PaylineRequest request*/) throws InvalidRequestException {
+        public SendOtpRequest fromPaylineRequest(PaymentRequest paylineRequest, DocapostLocalParam docapostLocalParam) throws InvalidRequestException {
 
             // Check the input request for NPEs and mandatory fields
-            this.checkInputRequest();
+            this.checkInputRequest(paylineRequest, docapostLocalParam);
 
-            // TODO : get value from Payline request
             SendOtpRequest request = new SendOtpRequest(
-                    TmpTestData.getInstance().creditorId,
-                    TmpTestData.getInstance().rum,
-                    TmpTestData.getInstance().transactionId
+                    paylineRequest.getContractConfiguration().getContractProperties().get( CONTRACT_CONFIG__CREDITOR_ID ).getValue(),
+                    docapostLocalParam.getMandateRum(),
+                    docapostLocalParam.getTransactionId()
             );
 
             return request;
 
         }
 
-        // FIXME : add Payline request parameter
-        private void checkInputRequest(/*PaylineRequest request*/) throws InvalidRequestException  {
-//            if ( request == null ) {
-//                throw new InvalidRequestException( "Request must not be null" );
-//            }
+        private void checkInputRequest(PaymentRequest paylineRequest, DocapostLocalParam docapostLocalParam) throws InvalidRequestException  {
+            if ( paylineRequest == null ) {
+                throw new InvalidRequestException( "Request must not be null" );
+            }
 
-            // TODO ...
+            if ( paylineRequest.getContractConfiguration() == null
+                    || paylineRequest.getContractConfiguration().getContractProperties() == null ) {
+                throw new InvalidRequestException( "Contract configuration properties object must not be null" );
+            }
+            Map<String, ContractProperty> contractProperties = paylineRequest.getContractConfiguration().getContractProperties();
+            if ( contractProperties.get( CONTRACT_CONFIG__CREDITOR_ID ) == null ) {
+                throw new InvalidRequestException( "Missing contract configuration property: creditor id" );
+            }
+
+            if ( docapostLocalParam == null
+                    || DocapostUtils.isEmpty(docapostLocalParam.getMandateRum()) ) {
+                throw new InvalidRequestException( "Missing mandatory property: mandate rum" );
+            }
+
+            if ( docapostLocalParam == null
+                    || DocapostUtils.isEmpty(docapostLocalParam.getTransactionId()) ) {
+                throw new InvalidRequestException( "Missing mandatory property: transaction id" );
+            }
 
         }
 

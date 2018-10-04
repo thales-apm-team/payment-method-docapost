@@ -2,12 +2,16 @@ package com.payline.payment.docapost.bean.rest.request.signature;
 
 import static com.payline.payment.docapost.utils.DocapostConstants.*;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.payline.payment.docapost.TmpTestData;
 import com.payline.payment.docapost.bean.rest.request.WSSignature;
 import com.payline.payment.docapost.exception.InvalidRequestException;
+import com.payline.payment.docapost.utils.DocapostUtils;
+import com.payline.pmapi.bean.payment.ContractProperty;
+import com.payline.pmapi.bean.payment.request.PaymentRequest;
 
 /**
  * Created by Thales on 29/08/2018.
@@ -81,31 +85,61 @@ public class SetCodeRequest extends WSSignatureRequest implements WSSignature {
     //***** BUILDER
     public static final class Builder {
 
-        public SetCodeRequest fromPaylineRequest(/*PaylineRequest request*/) throws InvalidRequestException {
+        public SetCodeRequest fromPaylineRequest(PaymentRequest paylineRequest) throws InvalidRequestException {
 
             // Check the input request for NPEs and mandatory fields
-            this.checkInputRequest();
+            this.checkInputRequest(paylineRequest);
 
-            // TODO : get value from Payline request
             SetCodeRequest request = new SetCodeRequest(
-                    TmpTestData.getInstance().creditorId,
-                    TmpTestData.getInstance().rum,
-                    TmpTestData.getInstance().transactionId,
-                    TmpTestData.getInstance().signatureId,
-                    TmpTestData.getInstance().otp
+                    paylineRequest.getContractConfiguration().getContractProperties().get( CONTRACT_CONFIG__CREDITOR_ID ).getValue(),
+                    paylineRequest.getRequestContext().getRequestContext().get( CONTEXT_DATA__MANDATE_RUM ),
+                    paylineRequest.getRequestContext().getRequestContext().get( CONTEXT_DATA__TRANSACTION_ID ),
+                    paylineRequest.getRequestContext().getRequestContext().get( CONTEXT_DATA__SIGNATURE_ID),
+                    paylineRequest.getPaymentFormContext().getPaymentFormParameter().get( FORM_FIELD__OTP )
             );
 
             return request;
 
         }
 
-        // FIXME : add Payline request parameter
-        private void checkInputRequest(/*PaylineRequest request*/) throws InvalidRequestException  {
-//            if ( request == null ) {
-//                throw new InvalidRequestException( "Request must not be null" );
-//            }
+        private void checkInputRequest(PaymentRequest paylineRequest) throws InvalidRequestException  {
+            if ( paylineRequest == null ) {
+                throw new InvalidRequestException( "Request must not be null" );
+            }
 
-            // TODO ...
+            if ( paylineRequest.getContractConfiguration() == null
+                    || paylineRequest.getContractConfiguration().getContractProperties() == null ) {
+                throw new InvalidRequestException( "Contract configuration properties object must not be null" );
+            }
+            Map<String, ContractProperty> contractProperties = paylineRequest.getContractConfiguration().getContractProperties();
+            if ( contractProperties.get( CONTRACT_CONFIG__CREDITOR_ID ) == null ) {
+                throw new InvalidRequestException( "Missing contract configuration property: creditor id" );
+            }
+
+            if ( paylineRequest.getPaymentFormContext() == null
+                    || paylineRequest.getPaymentFormContext().getPaymentFormParameter() == null
+                    || paylineRequest.getPaymentFormContext().getSensitivePaymentFormParameter() == null ) {
+                throw new InvalidRequestException( "Payment form context object must not be null" );
+            }
+            Map<String, String> paymentFormParameter = paylineRequest.getPaymentFormContext().getPaymentFormParameter();
+            if ( paymentFormParameter.get( FORM_FIELD__OTP ) == null ) {
+                throw new InvalidRequestException( "Missing payment form context data: form debtor OTP" );
+            }
+
+            if ( paylineRequest.getRequestContext() == null
+                || paylineRequest.getRequestContext().getRequestContext() == null ) {
+                throw new InvalidRequestException( "Request context data object must not be null" );
+            }
+            Map<String, String> requestContext = paylineRequest.getRequestContext().getRequestContext();
+            if ( requestContext.get( CONTEXT_DATA__MANDATE_RUM ) == null ) {
+                throw new InvalidRequestException( "Missing request context data: mandate rum" );
+            }
+            if ( requestContext.get( CONTEXT_DATA__SIGNATURE_ID) == null ) {
+                throw new InvalidRequestException( "Missing request context data: signature id" );
+            }
+            if ( requestContext.get( CONTEXT_DATA__TRANSACTION_ID) == null ) {
+                throw new InvalidRequestException( "Missing request context data: transaction id" );
+            }
 
         }
 

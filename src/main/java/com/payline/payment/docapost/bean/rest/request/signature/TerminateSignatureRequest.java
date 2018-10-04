@@ -3,7 +3,12 @@ package com.payline.payment.docapost.bean.rest.request.signature;
 import com.payline.payment.docapost.TmpTestData;
 import com.payline.payment.docapost.bean.rest.request.WSSignature;
 import com.payline.payment.docapost.exception.InvalidRequestException;
+import com.payline.payment.docapost.utils.DocapostLocalParam;
+import com.payline.payment.docapost.utils.DocapostUtils;
+import com.payline.pmapi.bean.payment.ContractProperty;
+import com.payline.pmapi.bean.payment.request.PaymentRequest;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -72,30 +77,52 @@ public class TerminateSignatureRequest extends WSSignatureRequest implements WSS
     //***** BUILDER
     public static final class Builder {
 
-        public TerminateSignatureRequest fromPaylineRequest(/*PaylineRequest request*/) throws InvalidRequestException {
+        public TerminateSignatureRequest fromPaylineRequest(PaymentRequest paylineRequest, DocapostLocalParam docapostLocalParam) throws InvalidRequestException {
 
             // Check the input request for NPEs and mandatory fields
-            this.checkInputRequest();
+            this.checkInputRequest(paylineRequest, docapostLocalParam);
 
-            // TODO : get value from Payline request
             TerminateSignatureRequest request = new TerminateSignatureRequest(
-                    TmpTestData.getInstance().creditorId,
-                    TmpTestData.getInstance().rum,
-                    TmpTestData.getInstance().transactionId,
-                    TmpTestData.getInstance().signatureAccess
+                    paylineRequest.getContractConfiguration().getContractProperties().get( CONTRACT_CONFIG__CREDITOR_ID ).getValue(),
+                    paylineRequest.getRequestContext().getRequestContext().get( CONTEXT_DATA__MANDATE_RUM ),
+                    paylineRequest.getRequestContext().getRequestContext().get( CONTEXT_DATA__TRANSACTION_ID ),
+                    docapostLocalParam.getSignatureSuccess()
             );
 
             return request;
 
         }
 
-        // FIXME : add Payline request parameter
-        private void checkInputRequest(/*PaylineRequest request*/) throws InvalidRequestException  {
-//            if ( request == null ) {
-//                throw new InvalidRequestException( "Request must not be null" );
-//            }
+        private void checkInputRequest(PaymentRequest paylineRequest, DocapostLocalParam docapostLocalParam) throws InvalidRequestException  {
+            if ( paylineRequest == null ) {
+                throw new InvalidRequestException( "Request must not be null" );
+            }
 
-            // TODO ...
+            if ( paylineRequest.getContractConfiguration() == null
+                    || paylineRequest.getContractConfiguration().getContractProperties() == null ) {
+                throw new InvalidRequestException( "Contract configuration properties object must not be null" );
+            }
+            Map<String, ContractProperty> contractProperties = paylineRequest.getContractConfiguration().getContractProperties();
+            if ( contractProperties.get( CONTRACT_CONFIG__CREDITOR_ID ) == null ) {
+                throw new InvalidRequestException( "Missing contract configuration property: creditor id" );
+            }
+
+            if ( paylineRequest.getRequestContext() == null
+                    || paylineRequest.getRequestContext().getRequestContext() == null ) {
+                throw new InvalidRequestException( "Request context data object must not be null" );
+            }
+            Map<String, String> requestContext = paylineRequest.getRequestContext().getRequestContext();
+            if ( requestContext.get( CONTEXT_DATA__MANDATE_RUM ) == null ) {
+                throw new InvalidRequestException( "Missing request context data: mandate rum" );
+            }
+            if ( requestContext.get( CONTEXT_DATA__TRANSACTION_ID) == null ) {
+                throw new InvalidRequestException( "Missing request context data: transaction id" );
+            }
+
+            if ( docapostLocalParam == null
+                    || docapostLocalParam.getSignatureSuccess() == null ) {
+                throw new InvalidRequestException( "Missing mandatory property: signature success" );
+            }
 
         }
 

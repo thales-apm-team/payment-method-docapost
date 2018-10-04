@@ -1,8 +1,5 @@
 package com.payline.payment.docapost.utils.http;
 
-import okhttp3.FormBody;
-import okhttp3.RequestBody;
-
 import java.util.Map;
 
 /**
@@ -22,14 +19,14 @@ public class RequestBodyBuilder {
         return this;
     }
 
-    public RequestBody build() {
-        FormBody.Builder builder = new FormBody.Builder();
-        for (Map.Entry<String, String> entry : formData.entrySet()) {
-            if (entry.getValue() != null) {
-                builder.add(entry.getKey(), entry.getValue());
-            }
-        }
-        return builder.build();
-    }
+//    public RequestBody build() {
+//        FormBody.Builder builder = new FormBody.Builder();
+//        for (Map.Entry<String, String> entry : formData.entrySet()) {
+//            if (entry.getValue() != null) {
+//                builder.add(entry.getKey(), entry.getValue());
+//            }
+//        }
+//        return builder.build();
+//    }
 
 }

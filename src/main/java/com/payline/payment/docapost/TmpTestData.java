@@ -18,7 +18,7 @@ public class TmpTestData {
     public String   otp;
     public Float    amount;
     public String   label;
-    public Boolean  signatureAccess;
+    public Boolean  signatureSuccess;
 
     public String   debtorLastName;
     public String   debtorFirstName;
@@ -55,7 +55,7 @@ public class TmpTestData {
         this.otp = null;
         this.amount = new Float(100);
         this.label = "A simple order";
-        this.signatureAccess = null;
+        this.signatureSuccess = null;
 
         this.debtorLastName = "Nicolas";
         this.debtorFirstName = "MICHNIEWSKI";

@@ -1,6 +1,6 @@
 package com.payline.payment.docapost.service;
 
-import com.payline.pmapi.bean.configuration.AbstractParameter;
+import com.payline.pmapi.bean.configuration.parameter.AbstractParameter;
 import com.payline.pmapi.bean.configuration.ReleaseInformation;
 import org.junit.Assert;
 import org.junit.Test;

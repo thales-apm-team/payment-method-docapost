@@ -1,19 +1,28 @@
 package com.payline.payment.docapost.utils.http;
 
-import okhttp3.MediaType;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Map;
 
-import static com.payline.payment.docapost.utils.DocapostConstants.APPLICATION_XML;
-import static com.payline.payment.docapost.utils.DocapostConstants.APPLICATION_X_WWW_FORM_URLENCODED;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.InputStreamEntity;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.message.BasicNameValuePair;
 
 /**
  * Created by Thales on 06/09/2018.
  */
-public class DocapostHttpClient extends HttpClient {
+public class DocapostHttpClient extends AbstractHttpClient {
+
+    /**
+     * Instantiate a HTTP client with default values.
+     */
+    public DocapostHttpClient(){
+        super( 10, 10, 15 );
+    }
 
     /**
      * Instantiate a HTTP client.
@@ -37,9 +46,12 @@ public class DocapostHttpClient extends HttpClient {
      * @return The response returned from the HTTP call
      * @throws IOException
      */
-    public Response doPost(String scheme, String host, String path, String xmlContent, String credential ) throws IOException {
-        RequestBody body = RequestBody.create( MediaType.parse( APPLICATION_XML ), xmlContent );
-        return super.doPost( scheme, host, path, body, APPLICATION_XML, credential );
+    public StringResponse doPost(String scheme, String host, String path, String xmlContent, String credential ) throws IOException, URISyntaxException {
+
+        StringEntity entity = new StringEntity(xmlContent);
+
+        return super.doPost( scheme, host, path, entity, ContentType.APPLICATION_XML.toString(), credential );
+
     }
 
     /**
@@ -53,9 +65,17 @@ public class DocapostHttpClient extends HttpClient {
      * @return The response returned from the HTTP call
      * @throws IOException
      */
-    public Response doPost(String scheme, String host, String path, Map<String, String> body, String credential ) throws IOException {
-        RequestBody requestBody = new RequestBodyBuilder().withFormData(body).build();
-        return super.doPost( scheme, host, path, requestBody, APPLICATION_X_WWW_FORM_URLENCODED, credential );
+    public StringResponse doPost(String scheme, String host, String path, Map<String, String> body, String credential ) throws IOException, URISyntaxException {
+
+        ArrayList<NameValuePair> parameters = new ArrayList<>();
+        for (Map.Entry<String, String> entry : body.entrySet()) {
+            parameters.add(new BasicNameValuePair(entry.getKey(), entry.getValue()));
+        }
+
+        InputStreamEntity entity = new InputStreamEntity(new UrlEncodedFormEntity(parameters).getContent());
+
+        return super.doPost( scheme, host, path, entity, ContentType.APPLICATION_FORM_URLENCODED.toString(), credential );
+
     }
 
 }

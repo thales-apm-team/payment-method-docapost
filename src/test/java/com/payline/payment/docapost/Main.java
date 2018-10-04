@@ -2,6 +2,7 @@ package com.payline.payment.docapost;
 
 import static com.payline.payment.docapost.utils.DocapostConstants.*;
 
+import com.payline.payment.docapost.bean.PaymentResponseSuccessAdditionalData;
 import com.payline.payment.docapost.bean.rest.request.mandate.MandateCreateRequest;
 import com.payline.payment.docapost.bean.rest.request.mandate.OrderCreateRequest;
 import com.payline.payment.docapost.bean.rest.request.signature.InitiateSignatureRequest;
@@ -17,12 +18,11 @@ import com.payline.payment.docapost.bean.rest.response.signature.SendOtpResponse
 import com.payline.payment.docapost.bean.rest.response.signature.SetCodeResponse;
 import com.payline.payment.docapost.bean.rest.response.signature.TerminateSignatureResponse;
 import com.payline.payment.docapost.exception.InvalidRequestException;
+import com.payline.payment.docapost.utils.DocapostUtils;
 import com.payline.payment.docapost.utils.config.ConfigEnvironment;
 import com.payline.payment.docapost.utils.config.ConfigProperties;
 import com.payline.payment.docapost.utils.http.DocapostHttpClient;
-
-import okhttp3.Credentials;
-import okhttp3.Response;
+import com.payline.payment.docapost.utils.http.StringResponse;
 
 /**
  * Created by Thales on 30/08/2018.
@@ -37,11 +37,13 @@ public class Main {
 
         DocapostHttpClient docapostHttpClient = new DocapostHttpClient(10, 10, 15);
 
+        String credentials = DocapostUtils.generateBasicCredentials(TmpTestData.AUTH_LOGIN, TmpTestData.AUTH_MDP);
+
         //##############################################################################################################
         // MandateCreate
         try {
 
-            MandateCreateRequest mandateCreateRequest = new MandateCreateRequest.Builder().fromPaylineRequest();
+            MandateCreateRequest mandateCreateRequest = new MandateCreateRequest.Builder().fromPaylineRequest(null);
 
             System.out.println(mandateCreateRequest.toString());
 
@@ -54,17 +56,17 @@ public class Main {
             String host = ConfigProperties.get(CONFIG__HOST, ConfigEnvironment.DEV);
             String path = ConfigProperties.get(CONFIG__PATH_WSMANDATE_MANDATE_CREATE);
 
-            final Response mandateCreateResponse = docapostHttpClient.doPost(
+            final StringResponse mandateCreateResponse = docapostHttpClient.doPost(
                     scheme,
                     host,
                     path,
                     requestBody,
-                    Credentials.basic(TmpTestData.AUTH_LOGIN, TmpTestData.AUTH_MDP)
+                    credentials /*Credentials.basic(TmpTestData.AUTH_LOGIN, TmpTestData.AUTH_MDP)*/
             );
 
             System.out.println(mandateCreateResponse);
 
-            xmlResponse = mandateCreateResponse.body().string().trim();
+            xmlResponse = mandateCreateResponse.getContent().trim();
 
             System.out.println(xmlResponse);
 
@@ -102,7 +104,7 @@ public class Main {
         // InitiateSignature
         try {
 
-            InitiateSignatureRequest initiateSignatureRequest = new InitiateSignatureRequest.Builder().fromPaylineRequest();
+            InitiateSignatureRequest initiateSignatureRequest = new InitiateSignatureRequest.Builder().fromPaylineRequest(null, null);
 
             System.out.println(initiateSignatureRequest.toString());
 
@@ -110,17 +112,17 @@ public class Main {
             String host = ConfigProperties.get(CONFIG__HOST, ConfigEnvironment.DEV);
             String path = ConfigProperties.get(CONFIG__PATH_WSSIGNATURE_INITIATE_SIGNATURE);
 
-            final Response initiateSignatureResponse = docapostHttpClient.doPost(
+            final StringResponse initiateSignatureResponse = docapostHttpClient.doPost(
                     scheme,
                     host,
                     path,
                     initiateSignatureRequest.getRequestBodyMap(),
-                    Credentials.basic(TmpTestData.AUTH_LOGIN, TmpTestData.AUTH_MDP)
+                    credentials /*Credentials.basic(TmpTestData.AUTH_LOGIN, TmpTestData.AUTH_MDP)*/
             );
 
             System.out.println(initiateSignatureResponse);
 
-            jsonResponse = initiateSignatureResponse.body().string().trim();
+            jsonResponse = initiateSignatureResponse.getContent().trim();
 
             System.out.println(jsonResponse);
 
@@ -152,7 +154,7 @@ public class Main {
         // sendOTP
         try {
 
-            SendOtpRequest sendOtpRequest = new SendOtpRequest.Builder().fromPaylineRequest();
+            SendOtpRequest sendOtpRequest = new SendOtpRequest.Builder().fromPaylineRequest(null, null);
 
             System.out.println(sendOtpRequest.toString());
 
@@ -160,17 +162,17 @@ public class Main {
             String host = ConfigProperties.get(CONFIG__HOST, ConfigEnvironment.DEV);
             String path = ConfigProperties.get(CONFIG__PATH_WSSIGNATURE_SEND_OTP);
 
-            final Response sendOTPResponse = docapostHttpClient.doPost(
+            final StringResponse sendOTPResponse = docapostHttpClient.doPost(
                     scheme,
                     host,
                     path,
                     sendOtpRequest.getRequestBodyMap(),
-                    Credentials.basic(TmpTestData.AUTH_LOGIN, TmpTestData.AUTH_MDP)
+                    credentials /*Credentials.basic(TmpTestData.AUTH_LOGIN, TmpTestData.AUTH_MDP)*/
             );
 
             System.out.println(sendOTPResponse);
 
-            jsonResponse = sendOTPResponse.body().string().trim();
+            jsonResponse = sendOTPResponse.getContent().trim();
 
             System.out.println(jsonResponse);
 
@@ -203,7 +205,7 @@ public class Main {
         try {
 
             // MAKE BREAKPOINT ON THE REQUEST BUILDING TO SET THE RECEIVED OTP CODE ON YOUR MOBILE PHONE
-            SetCodeRequest setCodeRequest = new SetCodeRequest.Builder().fromPaylineRequest();
+            SetCodeRequest setCodeRequest = new SetCodeRequest.Builder().fromPaylineRequest(null);
 
             System.out.println(setCodeRequest.toString());
 
@@ -211,17 +213,17 @@ public class Main {
             String host = ConfigProperties.get(CONFIG__HOST, ConfigEnvironment.DEV);
             String path = ConfigProperties.get(CONFIG__PATH_WSSIGNATURE_SET_CODE);
 
-            final Response setCodeResponse = docapostHttpClient.doPost(
+            final StringResponse setCodeResponse = docapostHttpClient.doPost(
                     scheme,
                     host,
                     path,
                     setCodeRequest.getRequestBodyMap(),
-                    Credentials.basic(TmpTestData.AUTH_LOGIN, TmpTestData.AUTH_MDP)
+                    credentials /*Credentials.basic(TmpTestData.AUTH_LOGIN, TmpTestData.AUTH_MDP)*/
             );
 
             System.out.println(setCodeResponse);
 
-            jsonResponse = setCodeResponse.body().string().trim();
+            jsonResponse = setCodeResponse.getContent().trim();
 
             System.out.println(jsonResponse);
 
@@ -241,13 +243,13 @@ public class Main {
 
         if (!setCodeResponse.isResultOk()) {
 
-            TmpTestData.getInstance().signatureAccess = new Boolean(false);
+            TmpTestData.getInstance().signatureSuccess = new Boolean(false);
 
             return;
 
         } else {
 
-            TmpTestData.getInstance().signatureAccess = new Boolean(true);
+            TmpTestData.getInstance().signatureSuccess = new Boolean(true);
 
         }
 
@@ -255,7 +257,7 @@ public class Main {
         // terminateSignature
         try {
 
-            TerminateSignatureRequest terminateSignatureRequest = new TerminateSignatureRequest.Builder().fromPaylineRequest();
+            TerminateSignatureRequest terminateSignatureRequest = new TerminateSignatureRequest.Builder().fromPaylineRequest(null, null);
 
             System.out.println(terminateSignatureRequest.toString());
 
@@ -263,17 +265,17 @@ public class Main {
             String host = ConfigProperties.get(CONFIG__HOST, ConfigEnvironment.DEV);
             String path = ConfigProperties.get(CONFIG__PATH_WSSIGNATURE_TERMINATE_SIGNATURE);
 
-            final Response terminateSignatureResponse = docapostHttpClient.doPost(
+            final StringResponse terminateSignatureResponse = docapostHttpClient.doPost(
                     scheme,
                     host,
                     path,
                     terminateSignatureRequest.getRequestBodyMap(),
-                    Credentials.basic(TmpTestData.AUTH_LOGIN, TmpTestData.AUTH_MDP)
+                    credentials /*Credentials.basic(TmpTestData.AUTH_LOGIN, TmpTestData.AUTH_MDP)*/
             );
 
             System.out.println(terminateSignatureResponse);
 
-            jsonResponse = terminateSignatureResponse.body().string().trim();
+            jsonResponse = terminateSignatureResponse.getContent().trim();
 
             System.out.println(jsonResponse);
 
@@ -305,7 +307,7 @@ public class Main {
         // orderCreate
         try {
 
-            OrderCreateRequest orderCreateRequest = new OrderCreateRequest.Builder().fromPaylineRequest();
+            OrderCreateRequest orderCreateRequest = new OrderCreateRequest.Builder().fromPaylineRequest(null);
 
             System.out.println(orderCreateRequest.toString());
 
@@ -318,17 +320,17 @@ public class Main {
             String host = ConfigProperties.get(CONFIG__HOST, ConfigEnvironment.DEV);
             String path = ConfigProperties.get(CONFIG__PATH_WSMANDATE_ORDER_CREATE);
 
-            final Response orderCreateResponse = docapostHttpClient.doPost(
+            final StringResponse orderCreateResponse = docapostHttpClient.doPost(
                     scheme,
                     host,
                     path,
                     requestBody,
-                    Credentials.basic(TmpTestData.AUTH_LOGIN, TmpTestData.AUTH_MDP)
+                    credentials /*Credentials.basic(TmpTestData.AUTH_LOGIN, TmpTestData.AUTH_MDP)*/
             );
 
             System.out.println(orderCreateResponse);
 
-            xmlResponse = orderCreateResponse.body().string().trim();
+            xmlResponse = orderCreateResponse.getContent().trim();
 
             System.out.println(xmlResponse);
 
@@ -359,112 +361,6 @@ public class Main {
             System.out.println(orderCreateResponse.toString());
 
         }
-
-//        if (orderCreateXmlResponse instanceof XmlErrorResponse) {
-//
-//            XmlErrorResponse xmlErrorResponse = (XmlErrorResponse) orderCreateXmlResponse;
-//
-//            System.out.println(xmlErrorResponse.toString());
-//
-//            return;
-//
-//        } else if (orderCreateXmlResponse instanceof OrderCreateResponse) {
-//
-//            OrderCreateResponse orderCreateResponse = (OrderCreateResponse) orderCreateXmlResponse;
-//
-//            System.out.println(orderCreateResponse.toString());
-//
-//        }
-
-
-        //##############################################################################################################
-        //##############################################################################################################
-        //##############################################################################################################
-
-//        try {
-//
-//            OrderCreateRequest orderCreateRequest = new OrderCreateRequest.Builder().fromPaylineRequest();
-//
-//            System.out.println(orderCreateRequest.toString());
-//
-//            requestBody = orderCreateRequest.buildBody();
-//
-//            System.out.println("OrderCreateRequest XML body :");
-//            System.out.println(requestBody);
-//
-//        } catch (InvalidRequestException e) {
-//            e.printStackTrace();
-//        }
-
-        //##############################################################################################################
-
-//        xmlResponse = "<WSMandateDTO>\n" +
-//                "   <creditorId>MARCHAND1</creditorId>\n" +
-//                "   <creditorIcs>FR28AAA000000</creditorIcs>\n" +
-//                "   <rum>PAYLINE-AXTM4BH41J</rum>\n" +
-//                "   <recurrent>false</recurrent>\n" +
-//                "   <status>Compliant</status>\n" +
-//                "   <debtor>\n" +
-//                "      <lastName>NICOLAS</lastName>\n" +
-//                "      <bic>NORDFRPPXXX</bic>\n" +
-//                "      <iban>FR7630076020821234567890186</iban>\n" +
-//                "      <firstName>MICHNIEWSKI</firstName>\n" +
-//                "      <street>25 RUE GAMBETTA</street>\n" +
-//                "      <postalCode>13130</postalCode>\n" +
-//                "      <town>BERRE L'ETANG</town>\n" +
-//                "      <phoneNumber>0628692878</phoneNumber>\n" +
-//                "      <countryCode>FR</countryCode>\n" +
-//                "      <complement/>\n" +
-//                "      <complement2/>\n" +
-//                "   </debtor>\n" +
-//                "   <mode>READ</mode>\n" +
-//                "   <flowName>STANDARD</flowName>\n" +
-//                "   <language>fr</language>\n" +
-//                "</WSMandateDTO>";
-//
-//        System.out.println("MandateCreateResponse XML body :");
-//        System.out.println(xmlResponse);
-//
-//        MandateCreateResponse mandateCreateResponse = new MandateCreateResponse.Builder().fromXml(xmlResponse);
-//
-//        System.out.println(mandateCreateResponse.toString());
-
-        //##############################################################################################################
-
-//        xmlResponse = "<WSDDOrderDTO>\n" +
-//                "   <label>A simple order</label>\n" +
-//                "   <dueDate>2018-09-07T00:00:00+02:00</dueDate>\n" +
-//                "   <e2eId>ZT5RYARP8M25UXSZ0U03P5MN69IJIG5I</e2eId>\n" +
-//                "   <remitDate>2018-09-05T00:00:00+02:00</remitDate>\n" +
-//                "   <sequence>Recurrent</sequence>\n" +
-//                "   <identifier>5CRLZWG2Y8FX9DQ8VRGZ8QDWI8A6Z60P</identifier>\n" +
-//                "   <rum>PAYLINE-9S25CDBNIL</rum>\n" +
-//                "   <creditorId>MARCHAND1</creditorId>\n" +
-//                "   <status>Created</status>\n" +
-//                "   <amount>100.0</amount>\n" +
-//                "</WSDDOrderDTO>";
-//
-//        System.out.println("OrderCreateResponse XML body :");
-//        System.out.println(xmlResponse);
-//
-//        OrderCreateResponse orderCreateResponse = new OrderCreateResponse.Builder().fromXml(xmlResponse);
-//
-//        System.out.println(orderCreateResponse.toString());
-
-        //##############################################################################################################
-
-//        xmlResponse = "<sepalia>\n" +
-//                "   <exception code=\"CREDITOR_ID_NOT_FOUND\">CREDITOR_ID_NOT_FOUND: MARCHAND</exception>\n" +
-//                "</sepalia>";
-//
-//        System.out.println("Error XML body :");
-//        System.out.println(xmlResponse);
-//
-//        XmlErrorResponse xmlErrorResponse = new XmlErrorResponse.Builder().fromXml(xmlResponse);
-//
-//        System.out.println(xmlErrorResponse.toString());
-
-        //##############################################################################################################
 
     }
 
