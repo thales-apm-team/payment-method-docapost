@@ -1,13 +1,11 @@
 package com.payline.payment.docapost.bean.rest.response.error;
 
-import com.payline.payment.docapost.bean.rest.response.AbstractXmlResponse;
+import com.payline.payment.docapost.bean.rest.response.mandate.AbstractXmlResponse;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.UnmarshalException;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.bind.annotation.*;
-import java.io.StringReader;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * Created by Thales on 04/09/2018.
@@ -22,7 +20,9 @@ public class XmlErrorResponse extends AbstractXmlResponse {
     /**
      * Public default constructor
      */
-    public XmlErrorResponse() { }
+    public XmlErrorResponse() {
+        // ras.
+    }
 
     public XmlErrorResponseException getException() {
         return exception;
@@ -32,16 +32,6 @@ public class XmlErrorResponse extends AbstractXmlResponse {
         this.exception = exception;
     }
 
-    @Override
-    public String toString() {
-        final StringBuilder result = new StringBuilder();
-
-        result.append("***** XmlErrorResponse info\n");
-
-        result.append(exception.toString() + "\n");
-
-        return result.toString();
-    }
 
     //******************************************************************************************************************
     //***** BUILDER

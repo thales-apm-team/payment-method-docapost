@@ -12,21 +12,13 @@ public class RequestBodyBuilder {
     /**
      * Default public constructor
      */
-    public RequestBodyBuilder() { }
+    public RequestBodyBuilder() {
+        // ras.
+    }
 
     public RequestBodyBuilder withFormData(Map<String, String> formData) {
         this.formData = formData;
         return this;
     }
-
-//    public RequestBody build() {
-//        FormBody.Builder builder = new FormBody.Builder();
-//        for (Map.Entry<String, String> entry : formData.entrySet()) {
-//            if (entry.getValue() != null) {
-//                builder.add(entry.getKey(), entry.getValue());
-//            }
-//        }
-//        return builder.build();
-//    }
 
 }

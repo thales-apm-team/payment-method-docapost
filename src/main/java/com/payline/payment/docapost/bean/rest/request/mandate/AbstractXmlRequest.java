@@ -1,8 +1,9 @@
 package com.payline.payment.docapost.bean.rest.request.mandate;
 
+import com.payline.payment.docapost.bean.rest.common.DocapostBean;
 import com.payline.payment.docapost.bean.rest.request.Request;
-import com.payline.payment.docapost.bean.rest.request.mandate.MandateCreateRequest;
-import org.apache.commons.lang.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -12,12 +13,13 @@ import java.io.StringWriter;
 /**
  * Created by Thales on 04/09/2018.
  */
-public abstract class AbstractXmlRequest implements Request {
+public abstract class AbstractXmlRequest extends DocapostBean implements Request {
+
+    private static final Logger LOGGER = LogManager.getLogger(AbstractXmlRequest.class);
 
     @Override
     public String buildBody() {
 
-        String result = StringUtils.EMPTY;
 
         try {
 
@@ -30,13 +32,13 @@ public abstract class AbstractXmlRequest implements Request {
 
             marshaller.marshal(this, writer);
 
-            result = writer.toString();
+            return writer.toString();
 
         } catch (JAXBException e) {
-            e.printStackTrace();
+            LOGGER.error("XML parsing exception", e);
         }
 
-        return result;
+        return "";
 
     }
 

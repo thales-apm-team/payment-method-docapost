@@ -5,32 +5,22 @@ import com.google.gson.Gson;
 /**
  * Created by Thales on 29/08/2018.
  */
-public class SetCodeResponse extends WSSignatureResponse {
+public class SetCodeResponse extends AbstractWSSignatureResponse {
 
     /**
      * Constructor
      */
-    public SetCodeResponse() { }
-
-    @Override
-    public String toString() {
-        final StringBuilder result = new StringBuilder();
-
-        result.append("***** SetCodeResponse info\n");
-
-        if (errors != null && !errors.isEmpty()) {
-            result.append(errors.toString() + "\n");
-        }
-
-        return result.toString();
+    public SetCodeResponse() {
+        // ras.
     }
+
 
     //******************************************************************************************************************
     //***** BUILDER
     public static final class Builder {
-        public SetCodeResponse fromJson(String jsonContent ) {
+        public SetCodeResponse fromJson(String jsonContent) {
             Gson gson = new Gson();
-            return gson.fromJson( jsonContent, SetCodeResponse.class );
+            return gson.fromJson(jsonContent, SetCodeResponse.class);
         }
     }
     //***** BUILDER

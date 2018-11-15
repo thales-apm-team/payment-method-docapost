@@ -22,7 +22,7 @@ import javax.xml.bind.annotation.*;
         }
 )
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Debtor {
+public class Debtor extends DocapostBean {
 
     @XmlElement(name = "lastName")
     private String lastName;
@@ -60,124 +60,52 @@ public class Debtor {
     /**
      * Public default constructor
      */
-    public Debtor() { }
-
-    /**
-
-     * Constructor
-     */
-    public Debtor(String lastName,
-                  String firstName,
-                  String bic,
-                  String iban,
-                  String street,
-                  String complement,
-                  String complement2,
-                  String postalCode,
-                  String town,
-                  String phoneNumber,
-                  String countryCode) {
-
-        this.lastName       = lastName;
-        this.firstName      = firstName;
-        this.bic            = bic;
-        this.iban           = iban;
-        this.street         = street;
-        this.complement     = complement;
-        this.complement2    = complement2;
-        this.postalCode     = postalCode;
-        this.town           = town;
-        this.phoneNumber    = phoneNumber;
-        this.countryCode    = countryCode;
-
+    public Debtor() {
+        // ras.
     }
 
     public String getLastName() {
         return lastName;
     }
 
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
     public String getFirstName() {
         return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
     }
 
     public String getBic() {
         return bic;
     }
 
-    public void setBic(String bic) {
-        this.bic = bic;
-    }
-
     public String getIban() {
         return iban;
-    }
-
-    public void setIban(String iban) {
-        this.iban = iban;
     }
 
     public String getStreet() {
         return street;
     }
 
-    public void setStreet(String street) {
-        this.street = street;
-    }
-
     public String getComplement() {
         return complement;
-    }
-
-    public void setComplement(String complement) {
-        this.complement = complement;
     }
 
     public String getComplement2() {
         return complement2;
     }
 
-    public void setComplement2(String complement2) {
-        this.complement2 = complement2;
-    }
-
     public String getPostalCode() {
         return postalCode;
-    }
-
-    public void setPostalCode(String postalCode) {
-        this.postalCode = postalCode;
     }
 
     public String getTown() {
         return town;
     }
 
-    public void setTown(String town) {
-        this.town = town;
-    }
-
     public String getPhoneNumber() {
         return phoneNumber;
     }
 
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
     public String getCountryCode() {
         return countryCode;
-    }
-
-    public void setCountryCode(String countryCode) {
-        this.countryCode = countryCode;
     }
 
     public Debtor lastName(String lastName) {
@@ -234,24 +162,4 @@ public class Debtor {
         this.countryCode = countryCode;
         return this;
     }
-
-    @Override
-    public String toString() {
-        final StringBuilder result = new StringBuilder();
-
-        result.append("debtor.lastName : " + lastName + "\n");
-        result.append("debtor.firstName : " + firstName + "\n");
-        result.append("debtor.bic : " + bic + "\n");
-        result.append("debtor.iban : " + iban + "\n");
-        result.append("debtor.street : " + street + "\n");
-        result.append("debtor.complement : " + complement + "\n");
-        result.append("debtor.complement2 : " + complement2 + "\n");
-        result.append("debtor.postalCode : " + postalCode + "\n");
-        result.append("debtor.town : " + town + "\n");
-        result.append("debtor.phoneNumber : " + phoneNumber + "\n");
-        result.append("debtor.countryCode : " + countryCode + "\n");
-
-        return result.toString();
-    }
-
 }
