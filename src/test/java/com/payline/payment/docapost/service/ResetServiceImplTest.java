@@ -2,6 +2,7 @@ package com.payline.payment.docapost.service;
 
 import com.payline.payment.docapost.exception.InvalidRequestException;
 import com.payline.payment.docapost.service.impl.ResetServiceImpl;
+import com.payline.payment.docapost.utils.http.DocapostHttpClient;
 import com.payline.payment.docapost.utils.http.StringResponse;
 import com.payline.pmapi.bean.common.FailureCause;
 import com.payline.pmapi.bean.reset.request.ResetRequest;
@@ -11,6 +12,10 @@ import com.payline.pmapi.bean.reset.response.impl.ResetResponseSuccess;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -19,12 +24,17 @@ import static com.payline.payment.docapost.TestUtils.createResetRequest;
 
 public class ResetServiceImplTest {
 
+    @InjectMocks
     private ResetServiceImpl service;
 
+    @Spy
+    private DocapostHttpClient httpClient;
 
     @Before
     public void setup() {
         this.service = new ResetServiceImpl();
+        MockitoAnnotations.initMocks(this);
+
     }
 
 
@@ -35,6 +45,15 @@ public class ResetServiceImplTest {
 
     @Test
     public void createSendRequestTest() throws URISyntaxException, IOException, InvalidRequestException {
+
+        StringResponse stringResponseMockded = new StringResponse();
+        stringResponseMockded.setContent("content");
+        stringResponseMockded.setMessage("Message");
+        stringResponseMockded.setCode(200);
+
+        Mockito.doReturn(stringResponseMockded).when(httpClient).doGet(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyString());
+
 
         ResetRequest resetRequest = createResetRequest();
         StringResponse response = service.createSendRequest(resetRequest);
@@ -95,12 +114,12 @@ public class ResetServiceImplTest {
     @Test
     public void canMultipleTest() {
 
-        Assert.assertFalse(service.canMultiple());
+        Assert.assertTrue(service.canMultiple());
     }
 
     @Test
     public void canPartialTest() {
-        Assert.assertFalse(service.canPartial());
+        Assert.assertTrue(service.canPartial());
     }
 
     @Test
