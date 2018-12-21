@@ -48,8 +48,8 @@ public class PaymentFormConfigurationServiceImplTest {
         Assert.assertTrue(paymentFormLogoResponse instanceof PaymentFormLogoResponseFile);
 
         PaymentFormLogoResponseFile casted = (PaymentFormLogoResponseFile) paymentFormLogoResponse;
-        Assert.assertEquals(200, casted.getHeight());
-        Assert.assertEquals(200, casted.getWidth());
+        Assert.assertEquals(25, casted.getHeight());
+        Assert.assertEquals(43, casted.getWidth());
     }
 
     @Test
