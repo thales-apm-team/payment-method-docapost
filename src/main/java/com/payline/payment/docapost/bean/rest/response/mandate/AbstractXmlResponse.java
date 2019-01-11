@@ -31,7 +31,7 @@ public abstract class AbstractXmlResponse extends DocapostBean {
             return unmarshaller.unmarshal(reader);
 
         } catch (JAXBException e) {
-            LOGGER.error("XML parsing exception : {}", e.getMessage(), e);
+            LOGGER.error("XML parsing exception", e);
         }
 
         return null;

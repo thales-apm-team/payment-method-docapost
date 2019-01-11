@@ -281,13 +281,13 @@ public class PaymentServiceStep03 implements PaymentServiceStep {
                     .withTransactionDetails(new EmptyTransactionDetails())
                     .build();
         } catch (InvalidRequestException e) {
-            LOGGER.error("The input payment request is invalid: {}", e.getMessage(), e);
+            LOGGER.error("The input payment request is invalid", e);
             return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INVALID_DATA);
         } catch (IOException e) {
-            LOGGER.error("An IOException occurred while sending the HTTP request or receiving the response: {}", e.getMessage(), e);
+            LOGGER.error("An IOException occurred while sending the HTTP request or receiving the response", e);
             return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.COMMUNICATION_ERROR);
         } catch (Exception e) {
-            LOGGER.error(UNEXPECTED_ERROR_MESSAGE, e.getMessage(), e);
+            LOGGER.error(UNEXPECTED_ERROR_MESSAGE, e);
             return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INTERNAL_ERROR);
         }
 

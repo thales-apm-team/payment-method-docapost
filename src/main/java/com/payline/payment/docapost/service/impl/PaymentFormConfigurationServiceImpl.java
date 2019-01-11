@@ -60,7 +60,7 @@ public class PaymentFormConfigurationServiceImpl implements PaymentFormConfigura
                     .withAlt(this.i18n.getMessage(PAYMENT_METHOD_NAME, paymentFormLogoRequest.getLocale()))
                     .build();
         } catch (IOException e) {
-            LOGGER.error("An error occurred reading the file: " + LOGO_PROPERTIES + " {}", e.getMessage(), e);
+            LOGGER.error("An error occurred reading the file: " + LOGO_PROPERTIES, e);
             throw new RuntimeException("Failed to reading file logo.properties: ", e);
 
         }
@@ -74,7 +74,7 @@ public class PaymentFormConfigurationServiceImpl implements PaymentFormConfigura
         try {
             props.load(ConfigurationServiceImpl.class.getClassLoader().getResourceAsStream(LOGO_PROPERTIES));
         } catch (IOException e) {
-            LOGGER.error("An error occurred reading the file: " + LOGO_PROPERTIES + " {}", e.getMessage(), e);
+            LOGGER.error("An error occurred reading the file: " + LOGO_PROPERTIES, e);
             throw new RuntimeException("Failed to reading file logo.properties: ", e);
 
         }
@@ -94,7 +94,7 @@ public class PaymentFormConfigurationServiceImpl implements PaymentFormConfigura
                     .build();
 
         } catch (IOException e) {
-            LOGGER.error("unable to load the logo: {}", e.getMessage(), e);
+            LOGGER.error("unable to load the logo", e);
             throw new RuntimeException("Unable to load logo " + fileName);
 
         }
