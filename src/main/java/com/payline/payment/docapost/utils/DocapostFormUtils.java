@@ -198,7 +198,6 @@ public class DocapostFormUtils {
 //                .build();
 
 
-
         List<PaymentFormField> customFields = new ArrayList<>();
         customFields.add(downloadMandateText);
         customFields.add(downloadMandateLink);
@@ -249,7 +248,7 @@ public class DocapostFormUtils {
             url = new URL(strUrl);
 
         } catch (MalformedURLException e) {
-            LOGGER.error(UNEXPECTED_ERROR_MESSAGE, e.getMessage(), e);
+            LOGGER.error(UNEXPECTED_ERROR_MESSAGE, e);
         }
 
         return url;
@@ -285,7 +284,7 @@ public class DocapostFormUtils {
             url = new URL(strUrl);
 
         } catch (UnsupportedEncodingException | MalformedURLException e) {
-            LOGGER.error(UNEXPECTED_ERROR_MESSAGE, e.getMessage(), e);
+            LOGGER.error(UNEXPECTED_ERROR_MESSAGE, e);
 
         }
 
