@@ -100,16 +100,16 @@ public class TerminateSignatureRequest extends WSSignatureRequest implements WSS
             if (requestContext.get(CONTEXT_DATA_TRANSACTION_ID) == null) {
                 throw new InvalidRequestException("Missing request context data: transaction id");
             }
-            if (contractProperties.get(PARTNER_CONFIG_AUTH_LOGIN) == null) {
-                throw new InvalidRequestException("Missing contract configuration property: auth login");
-            }
-            if (contractProperties.get(PARTNER_CONFIG_AUTH_PASS) == null) {
-                throw new InvalidRequestException("Missing contract configuration property: auth pass");
-            }
 
             if (paylineRequest.getPartnerConfiguration() == null
                     || paylineRequest.getPartnerConfiguration().getSensitiveProperties() == null) {
                 throw new InvalidRequestException("Partner configuration sensitive properties object must not be null");
+            }
+            if (paylineRequest.getPartnerConfiguration().getProperty(PARTNER_CONFIG_AUTH_LOGIN) == null) {
+                throw new InvalidRequestException("Missing partner configuration property: auth login");
+            }
+            if (paylineRequest.getPartnerConfiguration().getSensitiveProperties().get(PARTNER_CONFIG_AUTH_PASS) == null) {
+                throw new InvalidRequestException("Missing partner configuration property: auth pass");
             }
 
             if (docapostLocalParam == null

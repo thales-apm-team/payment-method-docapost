@@ -65,8 +65,8 @@ public class PaymentServiceImpl implements PaymentService {
 
         }
         // Recuperation des donnees necessaires pour la generation du Header Basic credentials des appels WS
-        String authLogin = paymentRequest.getContractConfiguration().getProperty(PARTNER_CONFIG_AUTH_LOGIN).getValue();
-        String authPass = paymentRequest.getContractConfiguration().getProperty(PARTNER_CONFIG_AUTH_PASS).getValue();
+        String authLogin = paymentRequest.getPartnerConfiguration().getProperty(PARTNER_CONFIG_AUTH_LOGIN);
+        String authPass = paymentRequest.getPartnerConfiguration().getSensitiveProperties().get(PARTNER_CONFIG_AUTH_PASS);
 
         credencials = DocapostUtils.generateBasicCredentials(authLogin, authPass);
         //----------------------------------------------------------------------------------------------------------

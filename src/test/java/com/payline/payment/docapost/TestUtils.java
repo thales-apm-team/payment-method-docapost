@@ -41,6 +41,7 @@ public class TestUtils {
     public static PaymentRequest createDefaultPaymentRequest() {
         final Amount amount = createAmount("EUR");
         final ContractConfiguration contractConfiguration = createContractConfiguration();
+        final PartnerConfiguration partnerConfiguration = createPartnerConfiguration();
         final Environment paylineEnvironment = new Environment(NOTIFICATION_URL, SUCCESS_URL, CANCEL_URL, true);
         final String transactionID = "transactionID";
         final Order order = createOrder(transactionID);
@@ -52,13 +53,13 @@ public class TestUtils {
                 .withBrowser(new Browser("", Locale.FRANCE))
                 .withLocale(Locale.FRANCE)
                 .withContractConfiguration(contractConfiguration)
+                .withPartnerConfiguration(partnerConfiguration)
                 .withEnvironment(paylineEnvironment)
                 .withOrder(order)
                 .withBuyer(createDefaultBuyer())
                 .withTransactionId(transactionID)
                 .withSoftDescriptor(softDescriptor)
                 .withEnvironment(createDefaultEnvironment())
-                .withPartnerConfiguration(createDefaultPartnerConfiguration())
                 .withSoftDescriptor(softDescriptor)
                 .build();
     }
@@ -66,6 +67,7 @@ public class TestUtils {
     public static PaymentRequest createDefaultPaymentRequestStep2(String phoneNumberTest) {
         final Amount amount = createAmount("EUR");
         final ContractConfiguration contractConfiguration = createContractConfiguration();
+        final PartnerConfiguration partnerConfiguration = createPartnerConfiguration();
         final Environment environment = new Environment(NOTIFICATION_URL, SUCCESS_URL, CANCEL_URL, true);
         final String transactionID = "transactionID";
         final Order order = createOrder(transactionID);
@@ -88,13 +90,13 @@ public class TestUtils {
                 .withBrowser(new Browser("", Locale.FRANCE))
                 .withLocale(Locale.FRANCE)
                 .withContractConfiguration(contractConfiguration)
+                .withPartnerConfiguration(partnerConfiguration)
                 .withEnvironment(environment)
                 .withOrder(order)
                 .withBuyer(createDefaultBuyer())
                 .withTransactionId(transactionID)
                 .withSoftDescriptor(softDescriptor)
                 .withEnvironment(createDefaultEnvironment())
-                .withPartnerConfiguration(createDefaultPartnerConfiguration())
                 .withSoftDescriptor(softDescriptor)
                 .withRequestContext(requestContext)
                 .withPaymentFormContext(createDefaultPaymentFormContext(phoneNumberTest))
@@ -105,6 +107,7 @@ public class TestUtils {
     public static PaymentRequest createCustomPaymentRequestStep3(Map<String, String> customRequestData, String otp, String phoneNumberTest) {
         final Amount amount = createAmount("EUR");
         final ContractConfiguration contractConfiguration = createContractConfiguration();
+        final PartnerConfiguration partnerConfiguration = createPartnerConfiguration();
         final Environment environment = new Environment(NOTIFICATION_URL, SUCCESS_URL, CANCEL_URL, true);
         final String transactionID = customRequestData.get("transactionId");
         //  final String transactionID = "transactionID";
@@ -130,13 +133,13 @@ public class TestUtils {
                 .withBrowser(new Browser("", Locale.FRANCE))
                 .withLocale(Locale.FRANCE)
                 .withContractConfiguration(contractConfiguration)
+                .withPartnerConfiguration(partnerConfiguration)
                 .withEnvironment(environment)
                 .withOrder(order)
                 .withBuyer(createDefaultBuyer())
                 .withTransactionId(transactionID)
                 .withSoftDescriptor(softDescriptor)
                 .withEnvironment(createDefaultEnvironment())
-                .withPartnerConfiguration(createDefaultPartnerConfiguration())
                 .withSoftDescriptor(softDescriptor)
                 .withRequestContext(requestContext)
 //                .withPaymentFormContext(createDefaultPaymentFormContext())
@@ -216,6 +219,7 @@ public class TestUtils {
     public static PaymentRequest.Builder createCompletePaymentBuilder() {
         final Amount amount = createAmount("EUR");
         final ContractConfiguration contractConfiguration = createContractConfiguration();
+        final PartnerConfiguration partnerConfiguration = createPartnerConfiguration();
 
         final Environment paylineEnvironment = new Environment(NOTIFICATION_URL, SUCCESS_URL, CANCEL_URL, true);
         final String transactionID = createTransactionId();
@@ -227,19 +231,20 @@ public class TestUtils {
                 .withAmount(amount)
                 .withBrowser(new Browser("", Locale.FRANCE))
                 .withContractConfiguration(contractConfiguration)
+                .withPartnerConfiguration(partnerConfiguration)
                 .withEnvironment(paylineEnvironment)
                 .withOrder(order)
                 .withLocale(locale)
                 .withTransactionId(transactionID)
                 .withSoftDescriptor(softDescriptor)
                 .withPaymentFormContext(createDefaultPaymentFormContext(PHONE_NUMBER_TEST))
-                .withPartnerConfiguration(createDefaultPartnerConfiguration())
                 .withLocale(Locale.FRANCE)
                 .withBuyer(createDefaultBuyer());
     }
 
     public static ResetRequest createResetRequest() {
         final ContractConfiguration contractConfiguration = createContractConfiguration();
+        final PartnerConfiguration partnerConfiguration = createPartnerConfiguration();
         String rum = createRUM();
         final String transactionID = createTransactionId();
         final Environment environment = new Environment(NOTIFICATION_URL, SUCCESS_URL, CANCEL_URL, true);
@@ -258,7 +263,7 @@ public class TestUtils {
                 .withBuyer(createDefaultBuyer())
                 .withTransactionId(transactionID)
                 .withContractConfiguration(contractConfiguration)
-                .withPartnerConfiguration(createDefaultPartnerConfiguration())
+                .withPartnerConfiguration(partnerConfiguration)
                 .withTransactionAdditionalData(additionalData.toJson())
                 .withEnvironment(createDefaultEnvironment())
                 .withPartnerTransactionId(createTransactionId())
@@ -267,6 +272,7 @@ public class TestUtils {
 
     public static RefundRequest createRefundRequest() {
         final ContractConfiguration contractConfiguration = createContractConfiguration();
+        final PartnerConfiguration partnerConfiguration = createPartnerConfiguration();
         String rum = createRUM();
         final String transactionID = createTransactionId();
 //        final Environment environment = new Environment(NOTIFICATION_URL, SUCCESS_URL, CANCEL_URL, true);
@@ -286,7 +292,7 @@ public class TestUtils {
                 .withTransactionId(transactionID)
                 .withSoftDescriptor(softDescriptor)
                 .withContractConfiguration(contractConfiguration)
-                .withPartnerConfiguration(createDefaultPartnerConfiguration())
+                .withPartnerConfiguration(partnerConfiguration)
                 .withTransactionAdditionalData(additionalData.toJson())
                 .withEnvironment(createDefaultEnvironment())
                 .withPartnerTransactionId(createTransactionId())
@@ -349,9 +355,17 @@ public class TestUtils {
         contractConfiguration.getContractProperties().put(CONTRACT_CONFIG_CREDITOR_ID, new ContractProperty(GOOD_CREDITOR_ID));
         contractConfiguration.getContractProperties().put(CONFIG_HOST, new ContractProperty("https://espaceclient.sepalia.fr/rcte"));
         contractConfiguration.getContractProperties().put(CONFIG_PATH_WSMANDATE_MANDATE_CREATE, new ContractProperty("mandate"));
-        contractConfiguration.getContractProperties().put(PARTNER_CONFIG_AUTH_LOGIN, new ContractProperty(GOOD_LOGIN));
-        contractConfiguration.getContractProperties().put(PARTNER_CONFIG_AUTH_PASS, new ContractProperty(GOOD_PWD));
+//        contractConfiguration.getContractProperties().put(PARTNER_CONFIG_AUTH_LOGIN, new ContractProperty(GOOD_LOGIN));
+//        contractConfiguration.getContractProperties().put(PARTNER_CONFIG_AUTH_PASS, new ContractProperty(GOOD_PWD));
         return contractConfiguration;
+    }
+
+    public static PartnerConfiguration createPartnerConfiguration() {
+        HashMap partnerConfigurationMap = new HashMap<>();
+        partnerConfigurationMap.put(PARTNER_CONFIG_AUTH_LOGIN, GOOD_LOGIN);
+        final PartnerConfiguration partnerConfiguration = new PartnerConfiguration(partnerConfigurationMap, new HashMap<>());
+        partnerConfiguration.getSensitiveProperties().put(PARTNER_CONFIG_AUTH_PASS, GOOD_PWD);
+        return partnerConfiguration;
     }
 
     public static Map<String, String> createAccountInfo() {
@@ -441,8 +455,6 @@ public class TestUtils {
     public static PartnerConfiguration createDefaultPartnerConfiguration() {
         Map<String, String> partnerConfiguration = new HashMap<>();
         Map<String, String> sensitivePartnerConfiguration = new HashMap<>();
-
-
         return new PartnerConfiguration(partnerConfiguration, sensitivePartnerConfiguration);
     }
 

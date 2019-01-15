@@ -115,23 +115,23 @@ public class DocapostFormUtils {
         ConfigEnvironment env = PluginUtils.getEnvironnement(request);
 
 
-        PaymentFormDisplayFieldText downloadMandateText = PaymentFormDisplayFieldText
-                .PaymentFormDisplayFieldTextBuilder
-                .aPaymentFormDisplayFieldText()
-                .withContent(i18n.getMessage(OTP_FORM_TEXT_DOWNLOAD_MANDATE, locale))
-                .build();
+//        PaymentFormDisplayFieldText downloadMandateText = PaymentFormDisplayFieldText
+//                .PaymentFormDisplayFieldTextBuilder
+//                .aPaymentFormDisplayFieldText()
+//                .withContent(i18n.getMessage(OTP_FORM_TEXT_DOWNLOAD_MANDATE, locale))
+//                .build();
 
-        PaymentFormDisplayFieldLink downloadMandateLink = PaymentFormDisplayFieldLink
-                .PaymentFormDisplayFieldLinkBuilder
-                .aPaymentFormDisplayFieldLink()
-                .withUrl(getDownloadMandateLinkUrl(
-                        env,
-                        sendOtpRequest.getCreditorId(),
-                        docapostLocalParam.getMandateRum()
-                ))
-                .withName(i18n.getMessage(OTP_FORM_LINK_DOWNLOAD_MANDATE, locale))
-                .withTitle(i18n.getMessage(OTP_FORM_LINK_DOWNLOAD_MANDATE, locale))
-                .build();
+//        PaymentFormDisplayFieldLink downloadMandateLink = PaymentFormDisplayFieldLink
+//                .PaymentFormDisplayFieldLinkBuilder
+//                .aPaymentFormDisplayFieldLink()
+//                .withUrl(getDownloadMandateLinkUrl(
+//                        env,
+//                        sendOtpRequest.getCreditorId(),
+//                        docapostLocalParam.getMandateRum()
+//                ))
+//                .withName(i18n.getMessage(OTP_FORM_LINK_DOWNLOAD_MANDATE, locale))
+//                .withTitle(i18n.getMessage(OTP_FORM_LINK_DOWNLOAD_MANDATE, locale))
+//                .build();
 
         PaymentFormDisplayFieldText otpText = PaymentFormDisplayFieldText
                 .PaymentFormDisplayFieldTextBuilder
@@ -199,8 +199,8 @@ public class DocapostFormUtils {
 
 
         List<PaymentFormField> customFields = new ArrayList<>();
-        customFields.add(downloadMandateText);
-        customFields.add(downloadMandateLink);
+//        customFields.add(downloadMandateText);
+//        customFields.add(downloadMandateLink);
         customFields.add(otpText);
         customFields.add(setOtpText);
         customFields.add(otpForm);
