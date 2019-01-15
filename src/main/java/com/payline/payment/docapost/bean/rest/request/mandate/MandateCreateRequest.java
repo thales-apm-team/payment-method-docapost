@@ -144,12 +144,6 @@ public class MandateCreateRequest extends AbstractXmlRequest {
             if (contractProperties.get(CONTRACT_CONFIG_CREDITOR_ID) == null) {
                 throw new InvalidRequestException("Missing contract configuration property: creditor id");
             }
-            if (contractProperties.get(PARTNER_CONFIG_AUTH_LOGIN) == null) {
-                throw new InvalidRequestException("Missing contract configuration property: auth login");
-            }
-            if (contractProperties.get(PARTNER_CONFIG_AUTH_PASS) == null) {
-                throw new InvalidRequestException("Missing contract configuration property: auth pass");
-            }
         }
 
         private void checkPaymentFormContext(PaymentRequest paylineRequest) throws InvalidRequestException {
@@ -173,6 +167,12 @@ public class MandateCreateRequest extends AbstractXmlRequest {
             if (paylineRequest.getPartnerConfiguration() == null
                     || paylineRequest.getPartnerConfiguration().getSensitiveProperties() == null) {
                 throw new InvalidRequestException("Partner configuration sensitive properties object must not be null");
+            }
+            if (paylineRequest.getPartnerConfiguration().getProperty(PARTNER_CONFIG_AUTH_LOGIN) == null) {
+                throw new InvalidRequestException("Missing partner configuration property: auth login");
+            }
+            if (paylineRequest.getPartnerConfiguration().getSensitiveProperties().get(PARTNER_CONFIG_AUTH_PASS) == null) {
+                throw new InvalidRequestException("Missing partner configuration property: auth pass");
             }
         }
 
