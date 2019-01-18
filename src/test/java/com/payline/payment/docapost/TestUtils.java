@@ -23,9 +23,9 @@ import static com.payline.payment.docapost.utils.DocapostConstants.*;
  */
 public class TestUtils {
 
-    public static final String SUCCESS_URL = "https://succesurl.com/";
-    public static final String CANCEL_URL = "http://localhost/cancelurl.com/";
-    public static final String NOTIFICATION_URL = "http://google.com/";
+    private static final String SUCCESS_URL = "https://succesurl.com/";
+    private static final String CANCEL_URL = "http://localhost/cancelurl.com/";
+    private static final String NOTIFICATION_URL = "http://google.com/";
     public static final String GOOD_CREDITOR_ID = "MARCHAND1"; //testItSlimpay //democreditor01
     public static final String GOOD_LOGIN = "payline@docapost.fr"; //
     public static final String GOOD_PWD = "J:[ef8dccma";
@@ -41,6 +41,7 @@ public class TestUtils {
     public static PaymentRequest createDefaultPaymentRequest() {
         final Amount amount = createAmount("EUR");
         final ContractConfiguration contractConfiguration = createContractConfiguration();
+        final PartnerConfiguration partnerConfiguration = createPartnerConfiguration();
         final Environment paylineEnvironment = new Environment(NOTIFICATION_URL, SUCCESS_URL, CANCEL_URL, true);
         final String transactionID = "transactionID";
         final Order order = createOrder(transactionID);
@@ -52,13 +53,13 @@ public class TestUtils {
                 .withBrowser(new Browser("", Locale.FRANCE))
                 .withLocale(Locale.FRANCE)
                 .withContractConfiguration(contractConfiguration)
+                .withPartnerConfiguration(partnerConfiguration)
                 .withEnvironment(paylineEnvironment)
                 .withOrder(order)
                 .withBuyer(createDefaultBuyer())
                 .withTransactionId(transactionID)
                 .withSoftDescriptor(softDescriptor)
                 .withEnvironment(createDefaultEnvironment())
-                .withPartnerConfiguration(createDefaultPartnerConfiguration())
                 .withSoftDescriptor(softDescriptor)
                 .build();
     }
@@ -66,11 +67,12 @@ public class TestUtils {
     public static PaymentRequest createDefaultPaymentRequestStep2(String phoneNumberTest) {
         final Amount amount = createAmount("EUR");
         final ContractConfiguration contractConfiguration = createContractConfiguration();
+        final PartnerConfiguration partnerConfiguration = createPartnerConfiguration();
         final Environment environment = new Environment(NOTIFICATION_URL, SUCCESS_URL, CANCEL_URL, true);
         final String transactionID = "transactionID";
         final Order order = createOrder(transactionID);
         final String softDescriptor = "softDescriptor";
-        //TODO find a better way to do it
+
         Map<String, String> requestData = new HashMap<>();
         requestData.put(CONTEXT_DATA_STEP, CONTEXT_DATA_STEP_IBAN_PHONE);
         requestData.put(CONTEXT_DATA_MANDATE_RUM, createRUM());
@@ -88,13 +90,13 @@ public class TestUtils {
                 .withBrowser(new Browser("", Locale.FRANCE))
                 .withLocale(Locale.FRANCE)
                 .withContractConfiguration(contractConfiguration)
+                .withPartnerConfiguration(partnerConfiguration)
                 .withEnvironment(environment)
                 .withOrder(order)
                 .withBuyer(createDefaultBuyer())
                 .withTransactionId(transactionID)
                 .withSoftDescriptor(softDescriptor)
                 .withEnvironment(createDefaultEnvironment())
-                .withPartnerConfiguration(createDefaultPartnerConfiguration())
                 .withSoftDescriptor(softDescriptor)
                 .withRequestContext(requestContext)
                 .withPaymentFormContext(createDefaultPaymentFormContext(phoneNumberTest))
@@ -105,12 +107,13 @@ public class TestUtils {
     public static PaymentRequest createCustomPaymentRequestStep3(Map<String, String> customRequestData, String otp, String phoneNumberTest) {
         final Amount amount = createAmount("EUR");
         final ContractConfiguration contractConfiguration = createContractConfiguration();
+        final PartnerConfiguration partnerConfiguration = createPartnerConfiguration();
         final Environment environment = new Environment(NOTIFICATION_URL, SUCCESS_URL, CANCEL_URL, true);
         final String transactionID = customRequestData.get("transactionId");
         //  final String transactionID = "transactionID";
         final Order order = createOrder(transactionID);
         final String softDescriptor = "softDescriptor";
-        //TODO find a better way to do it
+
         Map<String, String> requestData = customRequestData;
         final RequestContext requestContext = RequestContext.RequestContextBuilder
                 .aRequestContext()
@@ -130,13 +133,13 @@ public class TestUtils {
                 .withBrowser(new Browser("", Locale.FRANCE))
                 .withLocale(Locale.FRANCE)
                 .withContractConfiguration(contractConfiguration)
+                .withPartnerConfiguration(partnerConfiguration)
                 .withEnvironment(environment)
                 .withOrder(order)
                 .withBuyer(createDefaultBuyer())
                 .withTransactionId(transactionID)
                 .withSoftDescriptor(softDescriptor)
                 .withEnvironment(createDefaultEnvironment())
-                .withPartnerConfiguration(createDefaultPartnerConfiguration())
                 .withSoftDescriptor(softDescriptor)
                 .withRequestContext(requestContext)
 //                .withPaymentFormContext(createDefaultPaymentFormContext())
@@ -216,6 +219,7 @@ public class TestUtils {
     public static PaymentRequest.Builder createCompletePaymentBuilder() {
         final Amount amount = createAmount("EUR");
         final ContractConfiguration contractConfiguration = createContractConfiguration();
+        final PartnerConfiguration partnerConfiguration = createPartnerConfiguration();
 
         final Environment paylineEnvironment = new Environment(NOTIFICATION_URL, SUCCESS_URL, CANCEL_URL, true);
         final String transactionID = createTransactionId();
@@ -227,26 +231,26 @@ public class TestUtils {
                 .withAmount(amount)
                 .withBrowser(new Browser("", Locale.FRANCE))
                 .withContractConfiguration(contractConfiguration)
+                .withPartnerConfiguration(partnerConfiguration)
                 .withEnvironment(paylineEnvironment)
                 .withOrder(order)
                 .withLocale(locale)
                 .withTransactionId(transactionID)
                 .withSoftDescriptor(softDescriptor)
                 .withPaymentFormContext(createDefaultPaymentFormContext(PHONE_NUMBER_TEST))
-                .withPartnerConfiguration(createDefaultPartnerConfiguration())
                 .withLocale(Locale.FRANCE)
                 .withBuyer(createDefaultBuyer());
     }
 
     public static ResetRequest createResetRequest() {
         final ContractConfiguration contractConfiguration = createContractConfiguration();
+        final PartnerConfiguration partnerConfiguration = createPartnerConfiguration();
         String rum = createRUM();
         final String transactionID = createTransactionId();
         final Environment environment = new Environment(NOTIFICATION_URL, SUCCESS_URL, CANCEL_URL, true);
         PaymentResponseSuccessAdditionalData additionalData = new PaymentResponseSuccessAdditionalData().mandateRum(rum).transactionId(transactionID).signatureId("signature1");
         final Order order = createOrder(transactionID);
         final String softDescriptor = "softDescriptor";
-        //TODO find a better way to do it
         Map<String, String> requestData = new HashMap<>();
         requestData.put(CONTEXT_DATA_STEP, CONTEXT_DATA_STEP_IBAN_PHONE);
         requestData.put(CONTEXT_DATA_MANDATE_RUM, rum);
@@ -259,7 +263,7 @@ public class TestUtils {
                 .withBuyer(createDefaultBuyer())
                 .withTransactionId(transactionID)
                 .withContractConfiguration(contractConfiguration)
-                .withPartnerConfiguration(createDefaultPartnerConfiguration())
+                .withPartnerConfiguration(partnerConfiguration)
                 .withTransactionAdditionalData(additionalData.toJson())
                 .withEnvironment(createDefaultEnvironment())
                 .withPartnerTransactionId(createTransactionId())
@@ -268,13 +272,13 @@ public class TestUtils {
 
     public static RefundRequest createRefundRequest() {
         final ContractConfiguration contractConfiguration = createContractConfiguration();
+        final PartnerConfiguration partnerConfiguration = createPartnerConfiguration();
         String rum = createRUM();
         final String transactionID = createTransactionId();
 //        final Environment environment = new Environment(NOTIFICATION_URL, SUCCESS_URL, CANCEL_URL, true);
         PaymentResponseSuccessAdditionalData additionalData = new PaymentResponseSuccessAdditionalData().mandateRum(rum).transactionId(transactionID).signatureId("signature1");
         final Order order = createOrder(transactionID);
         final String softDescriptor = "softDescriptor";
-        //TODO find a better way to do it
         Map<String, String> requestData = new HashMap<>();
         requestData.put(CONTEXT_DATA_STEP, CONTEXT_DATA_STEP_IBAN_PHONE);
         requestData.put(CONTEXT_DATA_MANDATE_RUM, rum);
@@ -288,7 +292,7 @@ public class TestUtils {
                 .withTransactionId(transactionID)
                 .withSoftDescriptor(softDescriptor)
                 .withContractConfiguration(contractConfiguration)
-                .withPartnerConfiguration(createDefaultPartnerConfiguration())
+                .withPartnerConfiguration(partnerConfiguration)
                 .withTransactionAdditionalData(additionalData.toJson())
                 .withEnvironment(createDefaultEnvironment())
                 .withPartnerTransactionId(createTransactionId())
@@ -335,7 +339,7 @@ public class TestUtils {
 
 
     public static Buyer.FullName createFullName() {
-        return new Buyer.FullName("foo", "bar", Buyer.Civility.MR);
+        return new Buyer.FullName("foo", "bar","4");
     }
 
     public static Map<Buyer.PhoneNumberType, String> createDefaultPhoneNumbers() {
@@ -351,12 +355,24 @@ public class TestUtils {
         contractConfiguration.getContractProperties().put(CONTRACT_CONFIG_CREDITOR_ID, new ContractProperty(GOOD_CREDITOR_ID));
         contractConfiguration.getContractProperties().put(CONFIG_HOST, new ContractProperty("https://espaceclient.sepalia.fr/rcte"));
         contractConfiguration.getContractProperties().put(CONFIG_PATH_WSMANDATE_MANDATE_CREATE, new ContractProperty("mandate"));
+//        contractConfiguration.getContractProperties().put(PARTNER_CONFIG_AUTH_LOGIN, new ContractProperty(GOOD_LOGIN));
+//        contractConfiguration.getContractProperties().put(PARTNER_CONFIG_AUTH_PASS, new ContractProperty(GOOD_PWD));
         return contractConfiguration;
+    }
+
+    public static PartnerConfiguration createPartnerConfiguration() {
+        HashMap partnerConfigurationMap = new HashMap<>();
+        partnerConfigurationMap.put(PARTNER_CONFIG_AUTH_LOGIN, GOOD_LOGIN);
+        final PartnerConfiguration partnerConfiguration = new PartnerConfiguration(partnerConfigurationMap, new HashMap<>());
+        partnerConfiguration.getSensitiveProperties().put(PARTNER_CONFIG_AUTH_PASS, GOOD_PWD);
+        return partnerConfiguration;
     }
 
     public static Map<String, String> createAccountInfo() {
         Map<String, String> accountInfo = new HashMap<>();
         accountInfo.put(CONTRACT_CONFIG_CREDITOR_ID, GOOD_CREDITOR_ID);
+        accountInfo.put(PARTNER_CONFIG_AUTH_LOGIN, GOOD_LOGIN);
+        accountInfo.put(PARTNER_CONFIG_AUTH_PASS, GOOD_PWD);
         return accountInfo;
     }
 
@@ -439,9 +455,6 @@ public class TestUtils {
     public static PartnerConfiguration createDefaultPartnerConfiguration() {
         Map<String, String> partnerConfiguration = new HashMap<>();
         Map<String, String> sensitivePartnerConfiguration = new HashMap<>();
-        sensitivePartnerConfiguration.put(PARTNER_CONFIG_AUTH_LOGIN, GOOD_LOGIN);
-        sensitivePartnerConfiguration.put(PARTNER_CONFIG_AUTH_PASS, GOOD_PWD);
-
         return new PartnerConfiguration(partnerConfiguration, sensitivePartnerConfiguration);
     }
 

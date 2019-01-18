@@ -8,6 +8,7 @@ import com.payline.payment.docapost.utils.config.ConfigProperties;
 import com.payline.payment.docapost.utils.http.DocapostHttpClient;
 import com.payline.payment.docapost.utils.http.StringResponse;
 import com.payline.payment.docapost.utils.i18n.I18nService;
+import com.payline.pmapi.bean.configuration.PartnerConfiguration;
 import com.payline.pmapi.bean.configuration.ReleaseInformation;
 import com.payline.pmapi.bean.configuration.parameter.AbstractParameter;
 import com.payline.pmapi.bean.configuration.parameter.impl.InputParameter;
@@ -30,7 +31,7 @@ public class ConfigurationServiceImpl implements ConfigurationService {
 
     private I18nService i18n = I18nService.getInstance();
 
-    private DocapostHttpClient httpClient = new DocapostHttpClient();
+    private DocapostHttpClient httpClient = DocapostHttpClient.getInstance();
 
     @Override
     public List<AbstractParameter> getParameters(Locale locale) {
@@ -39,26 +40,10 @@ public class ConfigurationServiceImpl implements ConfigurationService {
         // Creditor id
         final InputParameter merchantName = new InputParameter();
         merchantName.setKey(CONTRACT_CONFIG_CREDITOR_ID);
-        merchantName.setLabel(CONTRACT_CONFIG_CREDITOR_ID_PROPERTY_LABEL);
-        merchantName.setDescription(CONTRACT_CONFIG_CREDITOR_ID_PROPERTY_DESCRIPTION);
+        merchantName.setLabel(this.i18n.getMessage(CONTRACT_CONFIG_CREDITOR_ID_PROPERTY_LABEL, locale));
+        merchantName.setDescription(this.i18n.getMessage(CONTRACT_CONFIG_CREDITOR_ID_PROPERTY_DESCRIPTION, locale));
         merchantName.setRequired(true);
         parameters.add(merchantName);
-
-        // Auth login
-        final InputParameter authLogin = new InputParameter();
-        authLogin.setKey(PARTNER_CONFIG_AUTH_LOGIN);
-        authLogin.setLabel(PARTNER_CONFIG_AUTH_LOGIN_PROPERTY_LABEL);
-        authLogin.setDescription(PARTNER_CONFIG_AUTH_LOGIN_PROPERTY_DESCRIPTION);
-        authLogin.setRequired(true);
-        parameters.add(authLogin);
-
-        // Auth pwd
-        final InputParameter authPwd = new InputParameter();
-        authPwd.setKey(PARTNER_CONFIG_AUTH_PASS);
-        authPwd.setLabel(PARTNER_CONFIG_AUTH_PASS_PROPERTY_LABEL);
-        authPwd.setDescription(PARTNER_CONFIG_AUTH_PASS_PROPERTY_DESCRIPTION);
-        authPwd.setRequired(true);
-        parameters.add(authPwd);
 
         return parameters;
     }
@@ -68,6 +53,7 @@ public class ConfigurationServiceImpl implements ConfigurationService {
 
         Locale locale = contractParametersCheckRequest.getLocale();
         final Map<String, String> accountInfo = contractParametersCheckRequest.getAccountInfo();
+        final PartnerConfiguration partnerConfiguration = contractParametersCheckRequest.getPartnerConfiguration();
         final Map<String, String> errors = new HashMap<>();
 
         // Creditor id
@@ -77,13 +63,13 @@ public class ConfigurationServiceImpl implements ConfigurationService {
         }
 
         // Credential auth login
-        final String authLogin = contractParametersCheckRequest.getPartnerConfiguration().getSensitiveProperties().get(PARTNER_CONFIG_AUTH_LOGIN);
+        final String authLogin = partnerConfiguration.getProperty(PARTNER_CONFIG_AUTH_LOGIN);
         if (PluginUtils.isEmpty(authLogin)) {
             errors.put(PARTNER_CONFIG_AUTH_LOGIN, this.i18n.getMessage(PARTNER_CONFIG_AUTH_LOGIN_ERROR, locale));
         }
 
-        // Credential auth password
-        final String authPass = contractParametersCheckRequest.getPartnerConfiguration().getSensitiveProperties().get(PARTNER_CONFIG_AUTH_PASS);
+        // Credential auth login
+        final String authPass = partnerConfiguration.getSensitiveProperties().get(PARTNER_CONFIG_AUTH_PASS);
         if (PluginUtils.isEmpty(authPass)) {
             errors.put(PARTNER_CONFIG_AUTH_PASS, this.i18n.getMessage(PARTNER_CONFIG_AUTH_PASS_ERROR, locale));
         }
@@ -129,7 +115,7 @@ public class ConfigurationServiceImpl implements ConfigurationService {
             }
 
         } catch (Exception e) {
-            LOGGER.error("An error occurred sending the validation request to the Docapost server: " + e.getMessage());
+            LOGGER.error("An error occurred sending the validation request to the Docapost server: ", e);
             errors.put(CONTRACT_CONFIG_CREDITOR_ID, this.i18n.getMessage(CONTRACT_CONFIG_CREDITOR_ID_ERROR, locale));
             errors.put(PARTNER_CONFIG_AUTH_LOGIN, this.i18n.getMessage(PARTNER_CONFIG_AUTH_LOGIN_ERROR, locale));
             errors.put(PARTNER_CONFIG_AUTH_PASS, this.i18n.getMessage(PARTNER_CONFIG_AUTH_PASS_ERROR, locale));
@@ -144,9 +130,9 @@ public class ConfigurationServiceImpl implements ConfigurationService {
         try {
             props.load(ConfigurationServiceImpl.class.getClassLoader().getResourceAsStream(RELEASE_PROPERTIES));
         } catch (IOException e) {
-            LOGGER.error("An error occurred reading the file: " + RELEASE_PROPERTIES);
-            props.setProperty(RELEASE_VERSION, "unknown");
-            props.setProperty(RELEASE_DATE, "01/01/1900");
+            LOGGER.error("An error occurred reading the file: " + RELEASE_PROPERTIES, e);
+            throw new RuntimeException("Failed to reading file release.properties: ", e);
+
         }
 
         LocalDate date = LocalDate.parse(props.getProperty(RELEASE_DATE), DateTimeFormatter.ofPattern(RELEASE_DATE_FORMAT));

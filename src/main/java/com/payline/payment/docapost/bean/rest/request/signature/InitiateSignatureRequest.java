@@ -79,11 +79,10 @@ public class InitiateSignatureRequest extends WSSignatureRequest implements WSSi
                     || paylineRequest.getPartnerConfiguration().getSensitiveProperties() == null) {
                 throw new InvalidRequestException("Partner configuration sensitive properties object must not be null");
             }
-            Map<String, String> sensitiveProperties = paylineRequest.getPartnerConfiguration().getSensitiveProperties();
-            if (sensitiveProperties.get(PARTNER_CONFIG_AUTH_LOGIN) == null) {
+            if (paylineRequest.getPartnerConfiguration().getProperty(PARTNER_CONFIG_AUTH_LOGIN) == null) {
                 throw new InvalidRequestException("Missing partner configuration property: auth login");
             }
-            if (sensitiveProperties.get(PARTNER_CONFIG_AUTH_PASS) == null) {
+            if (paylineRequest.getPartnerConfiguration().getSensitiveProperties().get(PARTNER_CONFIG_AUTH_PASS) == null) {
                 throw new InvalidRequestException("Missing partner configuration property: auth pass");
             }
 

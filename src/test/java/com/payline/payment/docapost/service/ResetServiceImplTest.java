@@ -2,7 +2,9 @@ package com.payline.payment.docapost.service;
 
 import com.payline.payment.docapost.exception.InvalidRequestException;
 import com.payline.payment.docapost.service.impl.ResetServiceImpl;
+import com.payline.payment.docapost.utils.http.DocapostHttpClient;
 import com.payline.payment.docapost.utils.http.StringResponse;
+import com.payline.payment.docapost.utils.type.WSRequestResultEnum;
 import com.payline.pmapi.bean.common.FailureCause;
 import com.payline.pmapi.bean.reset.request.ResetRequest;
 import com.payline.pmapi.bean.reset.response.ResetResponse;
@@ -11,6 +13,10 @@ import com.payline.pmapi.bean.reset.response.impl.ResetResponseSuccess;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -19,12 +25,17 @@ import static com.payline.payment.docapost.TestUtils.createResetRequest;
 
 public class ResetServiceImplTest {
 
+    @InjectMocks
     private ResetServiceImpl service;
 
+    @Spy
+    private DocapostHttpClient httpClient;
 
     @Before
     public void setup() {
         this.service = new ResetServiceImpl();
+        MockitoAnnotations.initMocks(this);
+
     }
 
 
@@ -36,6 +47,15 @@ public class ResetServiceImplTest {
     @Test
     public void createSendRequestTest() throws URISyntaxException, IOException, InvalidRequestException {
 
+        StringResponse stringResponseMockded = new StringResponse();
+        stringResponseMockded.setContent("content");
+        stringResponseMockded.setMessage("Message");
+        stringResponseMockded.setCode(200);
+
+        Mockito.doReturn(stringResponseMockded).when(httpClient).doGet(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyString());
+
+
         ResetRequest resetRequest = createResetRequest();
         StringResponse response = service.createSendRequest(resetRequest);
         String stringResponse = response.toString();
@@ -45,30 +65,102 @@ public class ResetServiceImplTest {
     }
 
     @Test
-    public void processResponseTestKO() {
+    public void processResponseTestKO_INVALID_STATUS_MODIFICATION() {
 
-        //Case responseFailure
+        //Case responseFailure processResponseTestKO_INVALID_STATUS_MODIFICATION
         StringResponse responseMocked = new StringResponse();
         responseMocked.setCode(400);
         responseMocked.setMessage("Bad Request");
-        responseMocked.setContent("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><sepalia><exception code=\"INVALID_IBAN\">INVALID_IBAN: iban[] has an invalide length</exception></sepalia>");
+        responseMocked.setContent("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><sepalia><exception code=\"INVALID_STATUS_MODIFICATION\">INVALID_STATUS_MODIFICATION: occurs if sdd order can't be cancelled</exception></sepalia>");
 
-        ResetResponse resetResponseFailure = service.processResponse(responseMocked);
-        Assert.assertNotNull(resetResponseFailure);
-        Assert.assertTrue(resetResponseFailure instanceof ResetResponseFailure);
+        ResetResponse resetResponse = service.processResponseFailure(responseMocked);
+        Assert.assertNotNull(resetResponse);
+        Assert.assertTrue(resetResponse instanceof ResetResponseFailure);
 
-        // case null
-        responseMocked.setCode(200);
+        ResetResponseFailure resetResponseFailure = (ResetResponseFailure) resetResponse;
+        Assert.assertEquals(WSRequestResultEnum.INVALID_STATUS_MODIFICATION.getDocapostErrorCode(), resetResponseFailure.getErrorCode());
+        Assert.assertEquals(WSRequestResultEnum.INVALID_STATUS_MODIFICATION.getPaylineFailureCause(), resetResponseFailure.getFailureCause());
+
+    }
+
+    @Test
+    public void processResponseTestKO_MANDATE_NOT_VALID() {
+
+        //Case responseFailure MANDATE_NOT_VALID
+        StringResponse responseMocked = new StringResponse();
+        responseMocked.setCode(400);
+        responseMocked.setMessage("Bad Request");
+        responseMocked.setContent("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><sepalia><exception code=\"MANDATE_NOT_VALID\">MANDATE_NOT_VALID: occurs if mandate is already revoked</exception></sepalia>");
+
+        ResetResponse resetResponse = service.processResponseFailure(responseMocked);
+        Assert.assertNotNull(resetResponse);
+        Assert.assertTrue(resetResponse instanceof ResetResponseFailure);
+
+        ResetResponseFailure resetResponseFailure = (ResetResponseFailure) resetResponse;
+        Assert.assertEquals(WSRequestResultEnum.MANDATE_NOT_VALID.getDocapostErrorCode(), resetResponseFailure.getErrorCode());
+        Assert.assertEquals(WSRequestResultEnum.MANDATE_NOT_VALID.getPaylineFailureCause(), resetResponseFailure.getFailureCause());
+
+    }
+
+    @Test
+    public void processResponseTestKO_UNAUTHORIZED() {
+
+        //Case responseFailure UNAUTHORIZED
+        StringResponse responseMocked = new StringResponse();
+        responseMocked.setCode(400);
+        responseMocked.setMessage("Bad Request");
+        responseMocked.setContent("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><sepalia><exception code=\"UNAUTHORIZED\">UNAUTHORIZED: occurs when the creditor is not found or the user have no access to this creditor</exception></sepalia>");
+
+        ResetResponse resetResponse = service.processResponseFailure(responseMocked);
+        Assert.assertNotNull(resetResponse);
+        Assert.assertTrue(resetResponse instanceof ResetResponseFailure);
+
+        ResetResponseFailure resetResponseFailure = (ResetResponseFailure) resetResponse;
+        Assert.assertEquals(WSRequestResultEnum.UNAUTHORIZED.getDocapostErrorCode(), resetResponseFailure.getErrorCode());
+        Assert.assertEquals(WSRequestResultEnum.UNAUTHORIZED.getPaylineFailureCause(), resetResponseFailure.getFailureCause());
+
+    }
+
+    @Test
+    public void processResponseTestKO_NOT_FOUND() {
+
+        //Case responseFailure NOT_FOUND
+        StringResponse responseMocked = new StringResponse();
+        responseMocked.setCode(400);
+        responseMocked.setMessage("Bad Request");
+        responseMocked.setContent("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><sepalia><exception code=\"NOT_FOUND\">NOT_FOUND: occurs when XXX is not found (sdd order or mandate)</exception></sepalia>");
+
+        ResetResponse resetResponse = service.processResponseFailure(responseMocked);
+        Assert.assertNotNull(resetResponse);
+        Assert.assertTrue(resetResponse instanceof ResetResponseFailure);
+
+        ResetResponseFailure resetResponseFailure = (ResetResponseFailure) resetResponse;
+        Assert.assertEquals(WSRequestResultEnum.NOT_FOUND.getDocapostErrorCode(), resetResponseFailure.getErrorCode());
+        Assert.assertEquals(WSRequestResultEnum.NOT_FOUND.getPaylineFailureCause(), resetResponseFailure.getFailureCause());
+
+    }
+
+    @Test
+    public void processResponseTestKO_NullResponse() {
+
+        //Case responseFailure null response
+        StringResponse responseMocked = new StringResponse();
+        responseMocked.setCode(400);
         responseMocked.setMessage("");
-        responseMocked.setContent("<WSCTOrderDTO></WSCTOrderDTO>");
+        responseMocked.setContent("");
 
-        ResetResponse resetResponseNull = service.processResponse(responseMocked);
-        Assert.assertNotNull(resetResponseNull);
-        Assert.assertTrue(resetResponseNull instanceof ResetResponseFailure);
+        ResetResponse resetResponse = service.processResponseFailure(responseMocked);
+        Assert.assertNotNull(resetResponse);
+        Assert.assertTrue(resetResponse instanceof ResetResponseFailure);
+
+        ResetResponseFailure resetResponseFailure = (ResetResponseFailure) resetResponse;
+        Assert.assertEquals("XML RESPONSE PARSING FAILED", resetResponseFailure.getErrorCode());
+        Assert.assertEquals(FailureCause.INVALID_DATA, resetResponseFailure.getFailureCause());
     }
 
     @Test
     public void processResponseTestOK() {
+
         //Case responseSuccess
         StringResponse responseMocked = new StringResponse();
         responseMocked.setCode(200);
@@ -86,7 +178,7 @@ public class ResetServiceImplTest {
                 "   <amount>100.0</amount>\n" +
                 "</WSDDOrderDTO>");
 
-        ResetResponse resetResponseSuccess = service.processResponse(responseMocked);
+        ResetResponse resetResponseSuccess = service.processResponseSuccess(responseMocked);
         Assert.assertNotNull(resetResponseSuccess);
         Assert.assertTrue(resetResponseSuccess instanceof ResetResponseSuccess);
         Assert.assertEquals("1108102438", resetResponseSuccess.getPartnerTransactionId());
@@ -95,12 +187,12 @@ public class ResetServiceImplTest {
     @Test
     public void canMultipleTest() {
 
-        Assert.assertFalse(service.canMultiple());
+        Assert.assertTrue(service.canMultiple());
     }
 
     @Test
     public void canPartialTest() {
-        Assert.assertFalse(service.canPartial());
+        Assert.assertTrue(service.canPartial());
     }
 
     @Test

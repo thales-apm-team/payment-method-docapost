@@ -63,7 +63,7 @@ public class ResetServiceImpl extends AbstractResetHttpService<ResetRequest> imp
 
         LOGGER.info("Path {}", path);
         // Recuperation des donnees necessaires pour la generation du Header Basic credentials des appels WS
-        String authLogin = resetRequest.getPartnerConfiguration().getSensitiveProperties().get(PARTNER_CONFIG_AUTH_LOGIN);
+        String authLogin = resetRequest.getPartnerConfiguration().getProperty(PARTNER_CONFIG_AUTH_LOGIN);
         String authPass = resetRequest.getPartnerConfiguration().getSensitiveProperties().get(PARTNER_CONFIG_AUTH_PASS);
 
         return this.httpClient.doGet(
@@ -75,63 +75,72 @@ public class ResetServiceImpl extends AbstractResetHttpService<ResetRequest> imp
     }
 
     @Override
-    public ResetResponse processResponse(StringResponse response) {
+    public ResetResponse processResponseSuccess(StringResponse response) {
 
         AbstractXmlResponse orderCancelXmlResponse = getOrderCancelResponse(response.getContent().trim());
 
         if (orderCancelXmlResponse != null) {
 
+            // Just in case but must be true
             if (orderCancelXmlResponse.isResultOk()) {
 
-                LOGGER.info("orderCancelXmlResponse ok");
+                LOGGER.info("OrderCancelXmlResponse AbstractXmlResponse instance of WSCTOrderDTOResponse");
 
                 WSDDOrderDTOResponse orderCancelResponse = (WSDDOrderDTOResponse) orderCancelXmlResponse;
 
-                return ResetResponseSuccess
-                        .ResetResponseSuccessBuilder
-                        .aResetResponseSuccess()
-                        .withStatusCode(orderCancelResponse.getStatus())
-                        .withPartnerTransactionId(orderCancelResponse.getE2eId())
-                        .build();
+                LOGGER.debug("OrderCancelResponse : {}", orderCancelResponse.toString());
+
+                return buildResetResponseSuccess(orderCancelResponse.getStatus(), orderCancelResponse.getE2eId());
 
             }
-
-
-            LOGGER.info("orderCancelXmlResponse ko");
-            XmlErrorResponse xmlErrorResponse = (XmlErrorResponse) orderCancelXmlResponse;
-
-            WSRequestResultEnum wsRequestResult = WSRequestResultEnum.fromDocapostErrorCode(xmlErrorResponse.getException().getCode());
-
-            return ResetResponseFailure
-                    .ResetResponseFailureBuilder
-                    .aResetResponseFailure()
-                    .withErrorCode(wsRequestResult.getDocapostErrorCode())
-                    .withFailureCause(wsRequestResult.getPaylineFailureCause())
-                    .build();
-
 
         }
 
         // case : orderCancelXmlResponse is null
         LOGGER.info("null orderCancelXmlResponse");
-        return ResetResponseFailure
-                .ResetResponseFailureBuilder
-                .aResetResponseFailure()
-                .withErrorCode("XML RESPONSE PARSING FAILED")
-                .withFailureCause(FailureCause.INVALID_DATA)
-                .build();
+        return buildResetResponseFailure("XML RESPONSE PARSING FAILED", FailureCause.INVALID_DATA);
 
+    }
+
+    @Override
+    public ResetResponse processResponseFailure(StringResponse response) {
+
+        AbstractXmlResponse orderCancelXmlResponse = getOrderCancelResponse(response.getContent().trim());
+
+        if (orderCancelXmlResponse != null) {
+
+            // Just in case but must be true
+            if (!orderCancelXmlResponse.isResultOk()) {
+
+                LOGGER.info("OrderCancelXmlResponse AbstractXmlResponse instance of XmlErrorResponse");
+
+                XmlErrorResponse xmlErrorResponse = (XmlErrorResponse) orderCancelXmlResponse;
+
+                LOGGER.debug("OrderCancelResponse : {}", xmlErrorResponse.toString());
+
+                // Retrieve the partner error type
+                WSRequestResultEnum wsRequestResult = WSRequestResultEnum.fromDocapostErrorCode(xmlErrorResponse.getException().getCode());
+
+                return buildResetResponseFailure(wsRequestResult);
+
+            }
+
+        }
+
+        // case : orderCancelXmlResponse is null
+        LOGGER.info("null orderCancelXmlResponse");
+        return buildResetResponseFailure("XML RESPONSE PARSING FAILED", FailureCause.INVALID_DATA);
 
     }
 
     @Override
     public boolean canMultiple() {
-        return false;
+        return true;
     }
 
     @Override
     public boolean canPartial() {
-        return false;
+        return true;
     }
 
     /**
