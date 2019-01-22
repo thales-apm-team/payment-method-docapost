@@ -1,5 +1,6 @@
 package com.payline.payment.docapost.utils;
 
+import com.payline.payment.docapost.bean.PaymentResponseSuccessAdditionalData;
 import com.payline.payment.docapost.bean.rest.common.Debtor;
 import org.apache.commons.codec.binary.Base64;
 
@@ -36,6 +37,13 @@ public class DocapostUtils {
                 .town("Marseille")
                 .phoneNumber("+33601020304")
                 .countryCode("FR");
+    }
+
+    public static PaymentResponseSuccessAdditionalData buildPaymentResponseSuccessAdditionalData(DocapostLocalParam docapostLocalParam) {
+        return new PaymentResponseSuccessAdditionalData()
+                .mandateRum(docapostLocalParam.getMandateRum())
+                .transactionId(docapostLocalParam.getTransactionId())
+                .signatureId(docapostLocalParam.getSignatureId());
     }
 
 }

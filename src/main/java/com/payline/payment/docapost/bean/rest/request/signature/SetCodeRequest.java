@@ -92,7 +92,7 @@ public class SetCodeRequest extends WSSignatureRequest implements WSSignature {
 
             checkPaymentFormContext(paylineRequest);
 
-            checkrequestContext(paylineRequest);
+            checkRequestContext(paylineRequest);
 
             checkPartnerConfiguration(paylineRequest);
 
@@ -134,7 +134,7 @@ public class SetCodeRequest extends WSSignatureRequest implements WSSignature {
             }
         }
 
-        private void checkrequestContext(PaymentRequest paylineRequest) throws InvalidRequestException {
+        private void checkRequestContext(PaymentRequest paylineRequest) throws InvalidRequestException {
             if (paylineRequest.getRequestContext() == null
                     || paylineRequest.getRequestContext().getRequestData() == null) {
                 throw new InvalidRequestException("Request context data object must not be null");
