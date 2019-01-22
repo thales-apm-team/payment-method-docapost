@@ -92,7 +92,7 @@ public class SetCodeRequest extends WSSignatureRequest implements WSSignature {
 
             checkPaymentFormContext(paylineRequest);
 
-            checkrequestContext(paylineRequest);
+            checkRequestContext(paylineRequest);
 
             checkPartnerConfiguration(paylineRequest);
 
@@ -129,12 +129,12 @@ public class SetCodeRequest extends WSSignatureRequest implements WSSignature {
             if (paylineRequest.getPartnerConfiguration().getProperty(PARTNER_CONFIG_AUTH_LOGIN) == null) {
                 throw new InvalidRequestException("Missing partner configuration property: auth login");
             }
-            if (paylineRequest.getPartnerConfiguration().getSensitiveProperties().get(PARTNER_CONFIG_AUTH_PASS) == null) {
+            if (paylineRequest.getPartnerConfiguration().getProperty(PARTNER_CONFIG_AUTH_PASS) == null) {
                 throw new InvalidRequestException("Missing partner configuration property: auth pass");
             }
         }
 
-        private void checkrequestContext(PaymentRequest paylineRequest) throws InvalidRequestException {
+        private void checkRequestContext(PaymentRequest paylineRequest) throws InvalidRequestException {
             if (paylineRequest.getRequestContext() == null
                     || paylineRequest.getRequestContext().getRequestData() == null) {
                 throw new InvalidRequestException("Request context data object must not be null");
