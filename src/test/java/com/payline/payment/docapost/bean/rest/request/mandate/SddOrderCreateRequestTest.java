@@ -241,10 +241,9 @@ public class SddOrderCreateRequestTest {
     @Test
     public void testCheckInputRequest_authLogin_ko() throws Exception {
         expectedEx.expect(InvalidRequestException.class);
-        expectedEx.expectMessage("Missing contract configuration property: auth login");
-        PaymentRequest paylineRequest = TestUtils.createDefaultPaymentRequest();
+        expectedEx.expectMessage("Missing partner configuration property: auth login");
+        PaymentRequest paylineRequest = TestUtils.createCustomPaymentRequestWithoutAuthLogin();
         paylineRequest.getRequestContext().getRequestData().put(CONTEXT_DATA_MANDATE_RUM, "rum");
-        paylineRequest.getContractConfiguration().getContractProperties().remove(PARTNER_CONFIG_AUTH_LOGIN);
 
         SddOrderCreateRequest sddOrderCreateRequest = new SddOrderCreateRequest.Builder().fromPaylineRequest(paylineRequest);
     }
@@ -256,10 +255,9 @@ public class SddOrderCreateRequestTest {
     @Test
     public void testCheckInputRequest_authPass_ko() throws Exception {
         expectedEx.expect(InvalidRequestException.class);
-        expectedEx.expectMessage("Missing contract configuration property: auth pass");
-        PaymentRequest paylineRequest = TestUtils.createDefaultPaymentRequest();
+        expectedEx.expectMessage("Missing partner configuration property: auth pass");
+        PaymentRequest paylineRequest = TestUtils.createCustomPaymentRequestWithoutAuthPwd();
         paylineRequest.getRequestContext().getRequestData().put(CONTEXT_DATA_MANDATE_RUM, "rum");
-        paylineRequest.getContractConfiguration().getContractProperties().remove(PARTNER_CONFIG_AUTH_PASS);
 
         SddOrderCreateRequest sddOrderCreateRequest = new SddOrderCreateRequest.Builder().fromPaylineRequest(paylineRequest);
     }
