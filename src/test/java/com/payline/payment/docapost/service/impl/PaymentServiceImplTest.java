@@ -1,6 +1,5 @@
-package com.payline.payment.docapost.service;
+package com.payline.payment.docapost.service.impl;
 
-import com.payline.payment.docapost.service.impl.PaymentServiceImpl;
 import com.payline.payment.docapost.utils.http.DocapostHttpClient;
 import com.payline.payment.docapost.utils.http.StringResponse;
 import com.payline.pmapi.bean.payment.request.PaymentRequest;
@@ -27,7 +26,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 @RunWith(MockitoJUnitRunner.class)
 public class PaymentServiceImplTest {
 
-
     @InjectMocks
     private PaymentServiceImpl paymentService = new PaymentServiceImpl();
 
@@ -38,8 +36,6 @@ public class PaymentServiceImplTest {
     public void testPaymentServiceImpl() {
         PaymentServiceImpl paymentService = new PaymentServiceImpl();
         Assert.assertNotNull(paymentService);
-
-
     }
 
     @Test
@@ -172,5 +168,22 @@ public class PaymentServiceImplTest {
 
     }
 
+    @Test
+    public void testGenerateCredentials(){
+
+        // Initialisation d'une PaymentRequest avec les parametres de PartnerConfiguration suivants :
+        // - PaymentRequest.partnerConfiguration.partnerConfigurationMap(PARTNER_CONFIG_AUTH_LOGIN, GOOD_LOGIN)
+        // - PaymentRequest.partnerConfiguration.sensitivePartnerConfigurationMap(PARTNER_CONFIG_AUTH_PASS, GOOD_PWD)
+        PaymentRequest paymentRequest = createDefaultPaymentRequest();
+
+        // Le resultat des credentials attendu est donc le suivant
+        String expectedCredentials = "Basic cGF5bGluZUBkb2NhcG9zdC5mcjpKOltlZjhkY2NtYQ==";
+
+        String credentials = paymentService.generateCredentials(paymentRequest);
+
+        Assert.assertNotNull(credentials);
+        Assert.assertEquals(expectedCredentials, credentials);
+
+    }
 
 }

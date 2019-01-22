@@ -18,36 +18,28 @@ public class PaymentServiceImpl implements PaymentService {
 
     private static final Logger LOGGER = LogManager.getLogger(PaymentServiceImpl.class);
 
-
     private DocapostHttpClient httpClient;
 
     private DocapostLocalParam docapostLocalParam;
-
-    public DocapostLocalParam getDocapostLocalParam() {
-        return docapostLocalParam;
-    }
 
     /**
      * Constructeur
      */
     public PaymentServiceImpl() {
-        this.httpClient = DocapostHttpClient.getInstance();
-        this.docapostLocalParam = DocapostLocalParam.getInstance();
-
+        httpClient = DocapostHttpClient.getInstance();
+        docapostLocalParam = DocapostLocalParam.getInstance();
     }
 
     @Override
     public PaymentResponse paymentRequest(PaymentRequest paymentRequest) {
 
-
         PaymentResponse response = null;
 
-
         // On recharge en local les parametres contextuels de requete
-        this.docapostLocalParam.restoreFromPaylineRequest(paymentRequest);
+        docapostLocalParam.restoreFromPaylineRequest(paymentRequest);
 
         ConfigEnvironment env = PluginUtils.getEnvironnement(paymentRequest);
-        String credencials = null;
+        String credentials = null;
 
         // Recuperation de l'information de step (etape du processus)
         String step = paymentRequest.getRequestContext().getRequestData().get(CONTEXT_DATA_STEP);
@@ -61,14 +53,12 @@ public class PaymentServiceImpl implements PaymentService {
         // Cas 1 : 1ere reception (contextData.get("step") = null ou vide
         if (PluginUtils.isEmpty(step)) {
             PaymentServiceStep step01 = new PaymentServiceStep01();
-            return step01.processPaymentStep(paymentRequest, env, docapostLocalParam, credencials);
-
+            return step01.processPaymentStep(paymentRequest, env, docapostLocalParam, credentials);
         }
-        // Recuperation des donnees necessaires pour la generation du Header Basic credentials des appels WS
-        String authLogin = paymentRequest.getPartnerConfiguration().getProperty(PARTNER_CONFIG_AUTH_LOGIN);
-        String authPass = paymentRequest.getPartnerConfiguration().getSensitiveProperties().get(PARTNER_CONFIG_AUTH_PASS);
 
-        credencials = DocapostUtils.generateBasicCredentials(authLogin, authPass);
+        // On genere les credentials necessaire pour les appels WS qui vont se faire aux steps 2 et 3 (pas d'appel WS au step 1)
+        credentials = generateCredentials(paymentRequest);
+
         //----------------------------------------------------------------------------------------------------------
         //**********************************************************************************************************
         //**********************************************************************************************************
@@ -76,9 +66,7 @@ public class PaymentServiceImpl implements PaymentService {
         // Cas 2 : 2nde reception (contextData.get("step") = IBAN_PHONE
         if (CONTEXT_DATA_STEP_IBAN_PHONE.equals(step)) {
             PaymentServiceStep step02 = new PaymentServiceStep02(httpClient);
-            return step02.processPaymentStep(paymentRequest, env, docapostLocalParam, credencials);
-
-
+            return step02.processPaymentStep(paymentRequest, env, docapostLocalParam, credentials);
         }
 
         //----------------------------------------------------------------------------------------------------------
@@ -88,13 +76,31 @@ public class PaymentServiceImpl implements PaymentService {
         //*** Cas 3 : 3eme reception (contextData.get("step") = 3
         if (CONTEXT_DATA_STEP_OTP.equals(step)) {
             PaymentServiceStep step03 = new PaymentServiceStep03(httpClient);
-            return step03.processPaymentStep(paymentRequest, env, docapostLocalParam, credencials);
-
-
+            return step03.processPaymentStep(paymentRequest, env, docapostLocalParam, credentials);
         }
 
         return response;
 
+    }
+
+    /**
+     * Generation des credentials necessaire a l'authentification lors des appels Ws
+     *
+     * @param paymentRequest
+     * @return
+     */
+    protected String generateCredentials(PaymentRequest paymentRequest) {
+
+        String credentials;
+
+        // Recuperation des donnees necessaires pour la generation du Header Basic credentials des appels WS
+        String authLogin = paymentRequest.getPartnerConfiguration().getProperty(PARTNER_CONFIG_AUTH_LOGIN);
+        String authPass = paymentRequest.getPartnerConfiguration().getSensitiveProperties().get(PARTNER_CONFIG_AUTH_PASS);
+
+        // Generation des credentials
+        credentials = DocapostUtils.generateBasicCredentials(authLogin, authPass);
+
+        return credentials;
 
     }
 
