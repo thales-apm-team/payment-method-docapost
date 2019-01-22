@@ -90,10 +90,8 @@ public class ConfigurationServiceImplTest {
         List<AbstractParameter> parameters = service.getParameters(Locale.FRANCE);
         //Assert we have 3 parameters
         Assert.assertNotNull(parameters);
-        Assert.assertEquals(3, parameters.size());
+        Assert.assertEquals(1, parameters.size());
         Assert.assertEquals(CONTRACT_CONFIG_CREDITOR_ID, parameters.get(0).getKey());
-        Assert.assertEquals(PARTNER_CONFIG_AUTH_LOGIN, parameters.get(1).getKey());
-        Assert.assertEquals(PARTNER_CONFIG_AUTH_PASS, parameters.get(2).getKey());
 
     }
 

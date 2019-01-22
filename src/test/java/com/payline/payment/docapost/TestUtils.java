@@ -64,6 +64,68 @@ public class TestUtils {
                 .build();
     }
 
+    /**
+     * Create a paymentRequest with custom parameters.
+     *
+     * @return paymentRequest created
+     */
+    public static PaymentRequest createCustomPaymentRequestWithoutAuthLogin() {
+        final Amount amount = createAmount("EUR");
+        final ContractConfiguration contractConfiguration = createContractConfiguration();
+        final PartnerConfiguration partnerConfiguration = createPartnerConfigurationWithoutAuthLogin();
+        final Environment paylineEnvironment = new Environment(NOTIFICATION_URL, SUCCESS_URL, CANCEL_URL, true);
+        final String transactionID = "transactionID";
+        final Order order = createOrder(transactionID);
+        final String softDescriptor = "softDescriptor";
+
+
+        return PaymentRequest.builder()
+                .withAmount(amount)
+                .withBrowser(new Browser("", Locale.FRANCE))
+                .withLocale(Locale.FRANCE)
+                .withContractConfiguration(contractConfiguration)
+                .withPartnerConfiguration(partnerConfiguration)
+                .withEnvironment(paylineEnvironment)
+                .withOrder(order)
+                .withBuyer(createDefaultBuyer())
+                .withTransactionId(transactionID)
+                .withSoftDescriptor(softDescriptor)
+                .withEnvironment(createDefaultEnvironment())
+                .withSoftDescriptor(softDescriptor)
+                .build();
+    }
+
+    /**
+     * Create a paymentRequest with custom parameters.
+     *
+     * @return paymentRequest created
+     */
+    public static PaymentRequest createCustomPaymentRequestWithoutAuthPwd() {
+        final Amount amount = createAmount("EUR");
+        final ContractConfiguration contractConfiguration = createContractConfiguration();
+        final PartnerConfiguration partnerConfiguration = createPartnerConfigurationWithoutAuthPwd();
+        final Environment paylineEnvironment = new Environment(NOTIFICATION_URL, SUCCESS_URL, CANCEL_URL, true);
+        final String transactionID = "transactionID";
+        final Order order = createOrder(transactionID);
+        final String softDescriptor = "softDescriptor";
+
+
+        return PaymentRequest.builder()
+                .withAmount(amount)
+                .withBrowser(new Browser("", Locale.FRANCE))
+                .withLocale(Locale.FRANCE)
+                .withContractConfiguration(contractConfiguration)
+                .withPartnerConfiguration(partnerConfiguration)
+                .withEnvironment(paylineEnvironment)
+                .withOrder(order)
+                .withBuyer(createDefaultBuyer())
+                .withTransactionId(transactionID)
+                .withSoftDescriptor(softDescriptor)
+                .withEnvironment(createDefaultEnvironment())
+                .withSoftDescriptor(softDescriptor)
+                .build();
+    }
+
     public static PaymentRequest createDefaultPaymentRequestStep2(String phoneNumberTest) {
         final Amount amount = createAmount("EUR");
         final ContractConfiguration contractConfiguration = createContractConfiguration();
@@ -368,6 +430,20 @@ public class TestUtils {
         return partnerConfiguration;
     }
 
+    public static PartnerConfiguration createPartnerConfigurationWithoutAuthLogin() {
+        HashMap partnerConfigurationMap = new HashMap<>();
+        final PartnerConfiguration partnerConfiguration = new PartnerConfiguration(partnerConfigurationMap, new HashMap<>());
+        partnerConfiguration.getSensitiveProperties().put(PARTNER_CONFIG_AUTH_PASS, GOOD_PWD);
+        return partnerConfiguration;
+    }
+
+    public static PartnerConfiguration createPartnerConfigurationWithoutAuthPwd() {
+        HashMap partnerConfigurationMap = new HashMap<>();
+        partnerConfigurationMap.put(PARTNER_CONFIG_AUTH_LOGIN, GOOD_LOGIN);
+        final PartnerConfiguration partnerConfiguration = new PartnerConfiguration(partnerConfigurationMap, new HashMap<>());
+        return partnerConfiguration;
+    }
+
     public static Map<String, String> createAccountInfo() {
         Map<String, String> accountInfo = new HashMap<>();
         accountInfo.put(CONTRACT_CONFIG_CREDITOR_ID, GOOD_CREDITOR_ID);
@@ -385,7 +461,7 @@ public class TestUtils {
                 .withAccountInfo(createAccountInfo())
                 .withEnvironment(createDefaultEnvironment())
                 .withLocale(Locale.FRANCE)
-                .withPartnerConfiguration(createDefaultPartnerConfiguration())
+                .withPartnerConfiguration(createPartnerConfiguration())
                 .build();
 
         return contractParametersCR;
