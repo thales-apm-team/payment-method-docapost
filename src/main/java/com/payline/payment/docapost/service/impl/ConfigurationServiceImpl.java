@@ -69,7 +69,7 @@ public class ConfigurationServiceImpl implements ConfigurationService {
         }
 
         // Credential auth login
-        final String authPass = partnerConfiguration.getSensitiveProperties().get(PARTNER_CONFIG_AUTH_PASS);
+        final String authPass = partnerConfiguration.getProperty(PARTNER_CONFIG_AUTH_PASS);
         if (PluginUtils.isEmpty(authPass)) {
             errors.put(PARTNER_CONFIG_AUTH_PASS, this.i18n.getMessage(PARTNER_CONFIG_AUTH_PASS_ERROR, locale));
         }
