@@ -24,6 +24,7 @@ import com.payline.pmapi.bean.common.FailureCause;
 import com.payline.pmapi.bean.payment.RequestContext;
 import com.payline.pmapi.bean.payment.request.PaymentRequest;
 import com.payline.pmapi.bean.payment.response.PaymentResponse;
+import com.payline.pmapi.bean.payment.response.impl.PaymentResponseFailure;
 import com.payline.pmapi.bean.payment.response.impl.PaymentResponseFormUpdated;
 import com.payline.pmapi.bean.paymentform.bean.form.CustomForm;
 import com.payline.pmapi.bean.paymentform.response.configuration.PaymentFormConfigurationResponse;
@@ -32,6 +33,7 @@ import com.payline.pmapi.logger.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,228 +49,109 @@ public class PaymentServiceStep02 implements PaymentServiceStep {
 
     public PaymentServiceStep02(DocapostHttpClient httpClient) {
         this.httpClient = httpClient;
-        //TEST ?
         this.docapostLocalParam = DocapostLocalParam.getInstance();
     }
 
     @Override
     public PaymentResponse processPaymentStep(PaymentRequest paymentRequest,
                                               ConfigEnvironment env,
-                                              DocapostLocalParam docapostLocalParam,
-                                              String credencials) {
-        String scheme;
-        String host;
-        String path;
+                                              DocapostLocalParam localParam,
+                                              String credentials) {
 
-        String requestBody;
-        String responseBody;
+        this.docapostLocalParam = localParam;
 
-        scheme = ConfigProperties.get(CONFIG_SCHEME, env);
-        host = ConfigProperties.get(CONFIG_HOST, env);
+        String scheme = ConfigProperties.get(CONFIG_SCHEME, env);
+        String host = ConfigProperties.get(CONFIG_HOST, env);
 
-        //######################################################################################################
-        //######################################################################################################
-        //######################################################################################################
-        //### API MandateWS /api/mandate/create
+            /*
+
+            NOTE CONCERNANT LES DIFFERENCES AU NIVEAU DES REPONSES AUX APPELS WS SUR LES APIS MANDATE & SIGNATURE:
+
+                Lors d'appels sur l'API MandateWS
+
+                - soit le WS repond correctement avec un code 200 et un body avec un content de la reponse au format XML
+                commencant par une balise correspondant au nom de l'objet DTO (par ex. <WSMandateDTO>
+
+                - soit le WS repond en erreur avec un code different de 200 mais dans le cas d'une erreur metier du cote
+                partenaire on peut avoir une Bad Request avec un code 400 et un body avec un content de la reponse au
+                format XML commencant par la balise <sepalia>
+
+                ==> Le traitement des erreurs metier sur API MandateWS est donc a traiter dans le case OTHER_CODE
+
+                Lors d'appels sur l'API SignatureWS
+
+                - soit le WS repond correctement avec un code 200 pour une reponse OK mais aussi pour les cas d'erreur
+                metier cote partenaire et dans ce cas on a un body avec un content de la reponse au format JSON qui
+                contient les infos soit de la reponse OK soit de l'erreur metier
+
+                - soit le WS repond en erreur avec un code different de 200 et dans ce cas il n'y a pas de body d'erreur
+                metier
+
+                ==> Le traitement des erreurs metier sur API SignatureWS est donc a traiter dans le case OK_200
+
+             */
+
         try {
+
+            PaymentResponse paymentResponse;
+
+            //######################################################################################################
+            //### API MandateWS /api/mandate/create
 
             // Initialisation de la requete Docapost
             MandateCreateRequest mandateCreateRequest = RequestBuilderFactory.buildMandateCreateRequest(paymentRequest);
 
-            // Generation des donnees du body de la requete
-            requestBody = mandateCreateRequest.buildBody();
+            paymentResponse = mandateCreate(mandateCreateRequest, scheme, host, credentials);
 
-            LOGGER.debug("MandateCreateRequest XML body : {}", requestBody);
-
-            // Execution de l'appel WS Docapost /api/mandate/create et recuperation de l'information "mandateRum"
-            path = ConfigProperties.get(CONFIG_PATH_WSMANDATE_MANDATE_CREATE);
-            final StringResponse mandateCreateStringResponse = this.httpClient.doPost(
-                    scheme,
-                    host,
-                    path,
-                    requestBody,
-                    credencials
-            );
-
-            if (mandateCreateStringResponse == null) {
-
-                LOGGER.debug("MandateCreateRequest StringResponse is null !");
-                LOGGER.error(HTTP_NULL_RESPONSE_ERROR_MESSAGE);
-                return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INTERNAL_ERROR);
-            }
-            LOGGER.debug("MandateCreateRequest StringResponse  {}", mandateCreateStringResponse.toString());
-
-            switch (ActionRequestResponse.checkResponse(mandateCreateStringResponse)) {
-                case OK_200:
-
-                    responseBody = mandateCreateStringResponse.getContent().trim();
-
-
-                    AbstractXmlResponse mandateCreateXmlResponse = getMandateCreateResponse(responseBody);
-
-                    if (mandateCreateXmlResponse != null) {
-
-
-                        if (mandateCreateXmlResponse.isResultOk()) {
-
-                            LOGGER.debug("WSMandateDTOResponse : {}", mandateCreateXmlResponse.toString());
-
-                            // Recuperation du parametre mandateRum
-                            this.docapostLocalParam.setMandateRum(((WSMandateDTOResponse) mandateCreateXmlResponse).getRum());
-
-                        } else {
-
-                            XmlErrorResponse xmlErrorResponse = (XmlErrorResponse) mandateCreateXmlResponse;
-                            LOGGER.debug("xmlErrorResponse error : {}", xmlErrorResponse.toString());
-
-                            WSRequestResultEnum wsRequestResult = WSRequestResultEnum.fromDocapostErrorCode(xmlErrorResponse.getException().getCode());
-
-                            return buildPaymentResponseFailure(wsRequestResult);
-
-                        }
-
-                    } else {
-                        return buildPaymentResponseFailure("XML RESPONSE PARSING FAILED", FailureCause.INVALID_DATA);
-                    }
-                    break;
-                case OTHER_CODE:
-                    LOGGER.error(HTTP_SENDING_ERROR_MESSAGE + mandateCreateStringResponse.getMessage());
-                    return buildPaymentResponseFailure(Integer.toString(mandateCreateStringResponse.getCode()), FailureCause.COMMUNICATION_ERROR);
-                default:
-                    LOGGER.error(HTTP_NULL_RESPONSE_ERROR_MESSAGE);
-                    return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INTERNAL_ERROR);
-
+            // Si la reponse a mandateCreate est une PaymentResponseFailure, on ne va pas plus loin et on l'a renvoie
+            if (paymentResponse != null && paymentResponse instanceof PaymentResponseFailure) {
+                return paymentResponse;
             }
 
-
             //######################################################################################################
-            //######################################################################################################
-            //######################################################################################################
-            //### API MandateWS /api/initiateSignature
+            //### API SignatureWS /api/initiateSignature
 
             // Initialisation de la requete Docapost
             InitiateSignatureRequest initiateSignatureRequest = RequestBuilderFactory.buildInitiateSignatureRequest(paymentRequest, this.docapostLocalParam);
 
-            // Execution de l'appel WS Docapost /api/initiateSignature et recuperation de l'information "transactionId"
-            path = ConfigProperties.get(CONFIG_PATH_WSSIGNATURE_INITIATE_SIGNATURE);
-            final StringResponse initiateSignatureStringResponse = this.httpClient.doPost(
-                    scheme,
-                    host,
-                    path,
-                    initiateSignatureRequest.getRequestBodyMap(),
-                    credencials
-            );
+            paymentResponse = initiateSignature(initiateSignatureRequest, scheme, host, credentials);
 
-            if (initiateSignatureStringResponse == null) {
-
-                LOGGER.debug("InitiateSignatureRequest StringResponse is null !");
-                LOGGER.error(HTTP_NULL_RESPONSE_ERROR_MESSAGE);
-                return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INTERNAL_ERROR);
-            }
-            LOGGER.debug("InitiateSignatureRequest StringResponse : {}", initiateSignatureStringResponse.toString());
-
-            switch (ActionRequestResponse.checkResponse(initiateSignatureStringResponse)) {
-                case OK_200:
-                    responseBody = initiateSignatureStringResponse.getContent().trim();
-
-                    LOGGER.debug("InitiateSignatureResponse JSON body : {}", responseBody);
-
-                    InitiateSignatureResponse initiateSignatureResponse = ResponseBuilderFactory.buildInitiateSignatureResponse(responseBody);
-
-                    if (initiateSignatureResponse.isResultOk()) {
-
-                        LOGGER.debug("InitiateSignatureResponse : {}", initiateSignatureResponse.toString());
-
-                        // Recuperation du parametre transactionId
-                        this.docapostLocalParam.setTransactionId(initiateSignatureResponse.getTransactionId());
-
-                    } else {
-
-                        LOGGER.debug("InitiateSignatureResponse error : {}", initiateSignatureResponse.getErrors().get(0));
-
-                        return buildPaymentResponseFailure(WSRequestResultEnum.PARTNER_UNKNOWN_ERROR);
-
-                    }
-                    break;
-                case OTHER_CODE:
-                    LOGGER.error(HTTP_SENDING_ERROR_MESSAGE + initiateSignatureStringResponse.getMessage());
-                    return buildPaymentResponseFailure(Integer.toString(initiateSignatureStringResponse.getCode()), FailureCause.COMMUNICATION_ERROR);
-                default:
-                    LOGGER.error(HTTP_NULL_RESPONSE_ERROR_MESSAGE);
-                    return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INTERNAL_ERROR);
-
+            // Si la reponse a initiateSignature est une PaymentResponseFailure, on ne va pas plus loin et on l'a renvoie
+            if (paymentResponse != null && paymentResponse instanceof PaymentResponseFailure) {
+                return paymentResponse;
             }
 
             //######################################################################################################
-            //######################################################################################################
-            //######################################################################################################
-            //### API MandateWS /api/sendOTP
+            //### API SignatureWS /api/sendOTP
+
             // Initialisation de la requete Docapost
             SendOtpRequest sendOtpRequest = RequestBuilderFactory.buildSendOtpRequest(paymentRequest, this.docapostLocalParam);
 
-            // Execution de l'appel WS Docapost /api/sendOTP et recuperation de l'information "signatureId"
-            path = ConfigProperties.get(CONFIG_PATH_WSSIGNATURE_SEND_OTP);
-            final StringResponse sendOTPStringResponse = this.httpClient.doPost(
-                    scheme,
-                    host,
-                    path,
-                    sendOtpRequest.getRequestBodyMap(),
-                    credencials
-            );
+            paymentResponse = sendOtp(sendOtpRequest, scheme, host, credentials);
 
-            if (sendOTPStringResponse == null) {
-
-                LOGGER.debug("SendOTPRequest StringResponse is null !");
-                LOGGER.error(HTTP_NULL_RESPONSE_ERROR_MESSAGE);
-                return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INTERNAL_ERROR);
-            }
-            LOGGER.debug("SendOTPRequest StringResponse : {}", sendOTPStringResponse.toString());
-
-            switch (ActionRequestResponse.checkResponse(sendOTPStringResponse)) {
-                case OK_200:
-
-                    responseBody = sendOTPStringResponse.getContent().trim();
-
-                    LOGGER.debug("SendOTPResponse JSON body : {}", responseBody);
-
-                    SendOtpResponse sendOtpResponse = ResponseBuilderFactory.buildSendOtpResponse(responseBody);
-
-                    if (sendOtpResponse.isResultOk()) {
-
-                        LOGGER.debug("SendOTPResponse : {}", sendOtpResponse.toString());
-
-                        // Recuperation du parametre transactionId
-                        this.docapostLocalParam.setSignatureId(sendOtpResponse.getSignatureId());
-
-                    } else {
-
-                        LOGGER.debug("SendOTPResponse error : {}", sendOtpResponse.getErrors().get(0));
-
-                        return buildPaymentResponseFailure(WSRequestResultEnum.PARTNER_UNKNOWN_ERROR);
-
-                    }
-                    break;
-                case OTHER_CODE:
-                    LOGGER.error(HTTP_SENDING_ERROR_MESSAGE + sendOTPStringResponse.getMessage());
-                    return buildPaymentResponseFailure(Integer.toString(sendOTPStringResponse.getCode()), FailureCause.COMMUNICATION_ERROR);
-                default:
-                    LOGGER.error(HTTP_NULL_RESPONSE_ERROR_MESSAGE);
-                    return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INTERNAL_ERROR);
+            // Si la reponse a sendOTP est une PaymentResponseFailure, on ne va pas plus loin et on l'a renvoie
+            if (paymentResponse != null && paymentResponse instanceof PaymentResponseFailure) {
+                return paymentResponse;
             }
 
-                /*
+            //######################################################################################################
+            //### BUILD de la PaymentResponse finale PaymentResponseFormUpdated
+            //######################################################################################################
 
-                    On doit retourner une reponse de type PaymentResponseFormUpdated pour faire afficher un formulaire de saisie
-                    avec un champ OTP, des textes d'information, des liens (telechargement du mandat, renvoie du code OTP), des checkbox
-
-                 */
             /*
-             * Creation d'un  customForm contenant
+
+                On doit retourner une reponse de type PaymentResponseFormUpdated pour faire afficher un formulaire de saisie
+                avec un champ OTP, des textes d'information, des liens (telechargement du mandat, renvoie du code OTP), des checkbox
+
+             */
+
+            /*
+             * Creation d'un customForm contenant
              * - link to download mandate
              * - link to resend otp code
              * - link to CGV
              */
-            CustomForm customForm = DocapostFormUtils.createOTPPaymentForm(docapostLocalParam, paymentRequest, sendOtpRequest);
+            CustomForm customForm = DocapostFormUtils.createOTPPaymentForm(this.docapostLocalParam, paymentRequest, sendOtpRequest);
 
             PaymentFormConfigurationResponse paymentFormConfigurationResponse = PaymentFormConfigurationResponseSpecific
                     .PaymentFormConfigurationResponseSpecificBuilder
@@ -302,6 +185,7 @@ public class PaymentServiceStep02 implements PaymentServiceStep {
                     .withPaymentFormConfigurationResponse(paymentFormConfigurationResponse)
                     .withRequestContext(requestContext)
                     .build();
+
         } catch (InvalidRequestException e) {
             LOGGER.error("The input payment request is invalid", e);
             return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INVALID_DATA);
@@ -315,6 +199,294 @@ public class PaymentServiceStep02 implements PaymentServiceStep {
 
     }
 
+    /**
+     * Execution et traitement de l'appel MandateWS Docapost /api/mandate/create
+     *
+     * @param mandateCreateRequest
+     * @param scheme
+     * @param host
+     * @param credentials
+     * @return
+     * @throws InvalidRequestException
+     * @throws IOException
+     * @throws URISyntaxException
+     */
+    protected PaymentResponse mandateCreate(MandateCreateRequest mandateCreateRequest,
+                                          String scheme,
+                                          String host,
+                                          String credentials) throws IOException, URISyntaxException {
+
+        String requestBody, responseBody, path;
+
+        // Generation des donnees du body de la requete
+        requestBody = mandateCreateRequest.buildBody();
+
+        LOGGER.debug("MandateCreateRequest XML body : {}", requestBody);
+
+        // Execution de l'appel WS Docapost /api/mandate/create et recuperation de l'information "mandateRum"
+        path = ConfigProperties.get(CONFIG_PATH_WSMANDATE_MANDATE_CREATE);
+        final StringResponse mandateCreateStringResponse = this.httpClient.doPost(
+                scheme,
+                host,
+                path,
+                requestBody,
+                credentials
+        );
+
+        if (mandateCreateStringResponse == null) {
+
+            LOGGER.debug("MandateCreateRequest StringResponse is null !");
+            LOGGER.error(HTTP_NULL_RESPONSE_ERROR_MESSAGE);
+            return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INTERNAL_ERROR);
+        }
+        LOGGER.debug("MandateCreateRequest StringResponse  {}", mandateCreateStringResponse.toString());
+
+        responseBody = mandateCreateStringResponse.getContent().trim();
+
+        LOGGER.debug("MandateCreateResponse XML body : {}", responseBody);
+
+        AbstractXmlResponse mandateCreateXmlResponse = getMandateCreateResponse(responseBody);
+
+        switch (ActionRequestResponse.checkResponse(mandateCreateStringResponse)) {
+
+            // Appel sur API MandateWS, le traitement des erreurs metier doit se faire dans le OTHER_CODE (cf. note
+            // en haut de page)
+
+            case OK_200:
+
+                if (mandateCreateXmlResponse != null) {
+
+                    if (mandateCreateXmlResponse.isResultOk()) {
+
+                        LOGGER.info("MandateCreateXmlResponse AbstractXmlResponse instance of WSMandateDTOResponse");
+
+                        WSMandateDTOResponse wsMandateDTOResponse = (WSMandateDTOResponse) mandateCreateXmlResponse;
+
+                        LOGGER.debug("WSMandateDTOResponse : {}", wsMandateDTOResponse.toString());
+
+                        // Recuperation du parametre mandateRum
+                        this.docapostLocalParam.setMandateRum(wsMandateDTOResponse.getRum());
+
+                    }
+
+                } else {
+
+                    return buildPaymentResponseFailure("XML RESPONSE PARSING FAILED", FailureCause.INVALID_DATA);
+
+                }
+
+                break;
+
+            case OTHER_CODE:
+
+                LOGGER.error(HTTP_SENDING_ERROR_MESSAGE + mandateCreateStringResponse.getMessage());
+
+                if (responseBody == null || responseBody.isEmpty()) {
+
+                    return buildPaymentResponseFailure(Integer.toString(mandateCreateStringResponse.getCode()), FailureCause.COMMUNICATION_ERROR);
+
+                } else  {
+
+                    if (mandateCreateXmlResponse != null) {
+
+                        if (!mandateCreateXmlResponse.isResultOk()) {
+
+                            LOGGER.info("MandateCreateXmlResponse AbstractXmlResponse instance of XmlErrorResponse");
+
+                            XmlErrorResponse xmlErrorResponse = (XmlErrorResponse) mandateCreateXmlResponse;
+
+                            LOGGER.debug("MandateCreateXmlResponse error : {}", xmlErrorResponse.toString());
+
+                            // Retrieve the partner error type
+                            WSRequestResultEnum wsRequestResult = WSRequestResultEnum.fromDocapostErrorCode(xmlErrorResponse.getException().getCode());
+
+                            return buildPaymentResponseFailure(wsRequestResult);
+
+                        }
+
+                    }
+                }
+
+            default:
+
+                LOGGER.error(HTTP_NULL_RESPONSE_ERROR_MESSAGE);
+
+                return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INTERNAL_ERROR);
+
+        }
+
+        return null;
+
+    }
+
+    /**
+     * Execution et traitement de l'appel SignatureWS /api/initiateSignature
+     *
+     * @param initiateSignatureRequest
+     * @param scheme
+     * @param host
+     * @param credentials
+     * @return
+     * @throws InvalidRequestException
+     * @throws IOException
+     * @throws URISyntaxException
+     */
+    protected PaymentResponse initiateSignature(InitiateSignatureRequest initiateSignatureRequest,
+                                              String scheme,
+                                              String host,
+                                              String credentials) throws IOException, URISyntaxException {
+
+        String responseBody, path;
+
+        // Execution de l'appel WS Docapost /api/initiateSignature et recuperation de l'information "transactionId"
+        path = ConfigProperties.get(CONFIG_PATH_WSSIGNATURE_INITIATE_SIGNATURE);
+        final StringResponse initiateSignatureStringResponse = this.httpClient.doPost(
+                scheme,
+                host,
+                path,
+                initiateSignatureRequest.getRequestBodyMap(),
+                credentials
+        );
+
+        if (initiateSignatureStringResponse == null) {
+
+            LOGGER.debug("InitiateSignatureRequest StringResponse is null !");
+            LOGGER.error(HTTP_NULL_RESPONSE_ERROR_MESSAGE);
+            return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INTERNAL_ERROR);
+        }
+        LOGGER.debug("InitiateSignatureRequest StringResponse : {}", initiateSignatureStringResponse.toString());
+
+        switch (ActionRequestResponse.checkResponse(initiateSignatureStringResponse)) {
+
+            // Appel sur API SignatureWS, le traitement des erreurs metier doit se faire dans le OK_200 (cf. note
+            // en haut de page)
+
+            case OK_200:
+
+                responseBody = initiateSignatureStringResponse.getContent().trim();
+
+                LOGGER.debug("InitiateSignatureResponse JSON body : {}", responseBody);
+
+                InitiateSignatureResponse initiateSignatureResponse = ResponseBuilderFactory.buildInitiateSignatureResponse(responseBody);
+
+                if (initiateSignatureResponse.isResultOk()) {
+
+                    LOGGER.debug("InitiateSignatureResponse : {}", initiateSignatureResponse.toString());
+
+                    // Recuperation du parametre transactionId
+                    this.docapostLocalParam.setTransactionId(initiateSignatureResponse.getTransactionId());
+
+                } else {
+
+                    LOGGER.debug("InitiateSignatureResponse error : {}", initiateSignatureResponse.getErrors().get(0));
+
+                    return buildPaymentResponseFailure(WSRequestResultEnum.PARTNER_UNKNOWN_ERROR);
+
+                }
+
+                break;
+
+            case OTHER_CODE:
+
+                LOGGER.error(HTTP_SENDING_ERROR_MESSAGE + initiateSignatureStringResponse.getMessage());
+
+                return buildPaymentResponseFailure(Integer.toString(initiateSignatureStringResponse.getCode()), FailureCause.COMMUNICATION_ERROR);
+
+            default:
+
+                LOGGER.error(HTTP_NULL_RESPONSE_ERROR_MESSAGE);
+
+                return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INTERNAL_ERROR);
+
+        }
+
+        return null;
+
+    }
+
+    /**
+     * Execution et traitement de l'appel SignatureWS /api/sendOTP
+     *
+     * @param sendOtpRequest
+     * @param scheme
+     * @param host
+     * @param credentials
+     * @return
+     * @throws InvalidRequestException
+     * @throws IOException
+     * @throws URISyntaxException
+     */
+    protected PaymentResponse sendOtp(SendOtpRequest sendOtpRequest,
+                                    String scheme,
+                                    String host,
+                                    String credentials) throws IOException, URISyntaxException {
+
+        String responseBody, path;
+
+        // Execution de l'appel WS Docapost /api/sendOTP et recuperation de l'information "signatureId"
+        path = ConfigProperties.get(CONFIG_PATH_WSSIGNATURE_SEND_OTP);
+        final StringResponse sendOTPStringResponse = this.httpClient.doPost(
+                scheme,
+                host,
+                path,
+                sendOtpRequest.getRequestBodyMap(),
+                credentials
+        );
+
+        if (sendOTPStringResponse == null) {
+
+            LOGGER.debug("SendOTPRequest StringResponse is null !");
+            LOGGER.error(HTTP_NULL_RESPONSE_ERROR_MESSAGE);
+            return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INTERNAL_ERROR);
+        }
+        LOGGER.debug("SendOTPRequest StringResponse : {}", sendOTPStringResponse.toString());
+
+        switch (ActionRequestResponse.checkResponse(sendOTPStringResponse)) {
+
+            // Appel sur API SignatureWS, le traitement des erreurs metier doit se faire dans le OK_200 (cf. note
+            // en haut de page)
+
+            case OK_200:
+
+                responseBody = sendOTPStringResponse.getContent().trim();
+
+                LOGGER.debug("SendOTPResponse JSON body : {}", responseBody);
+
+                SendOtpResponse sendOtpResponse = ResponseBuilderFactory.buildSendOtpResponse(responseBody);
+
+                if (sendOtpResponse.isResultOk()) {
+
+                    LOGGER.debug("SendOTPResponse : {}", sendOtpResponse.toString());
+
+                    // Recuperation du parametre transactionId
+                    this.docapostLocalParam.setSignatureId(sendOtpResponse.getSignatureId());
+
+                } else {
+
+                    LOGGER.debug("SendOTPResponse error : {}", sendOtpResponse.getErrors().get(0));
+
+                    return buildPaymentResponseFailure(WSRequestResultEnum.PARTNER_UNKNOWN_ERROR);
+
+                }
+
+                break;
+
+            case OTHER_CODE:
+
+                LOGGER.error(HTTP_SENDING_ERROR_MESSAGE + sendOTPStringResponse.getMessage());
+
+                return buildPaymentResponseFailure(Integer.toString(sendOTPStringResponse.getCode()), FailureCause.COMMUNICATION_ERROR);
+
+            default:
+
+                LOGGER.error(HTTP_NULL_RESPONSE_ERROR_MESSAGE);
+
+                return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INTERNAL_ERROR);
+        }
+
+        return null;
+
+    }
 
     /**
      * Return a AbstractXmlResponse (WSDDOrderDTOResponse or XmlErrorResponse in case of error) based on a XML content
@@ -322,7 +494,7 @@ public class PaymentServiceStep02 implements PaymentServiceStep {
      * @param xmlResponse the XML content
      * @return the AbstractXmlResponse
      */
-    private static AbstractXmlResponse getMandateCreateResponse(String xmlResponse) {
+    protected AbstractXmlResponse getMandateCreateResponse(String xmlResponse) {
 
         XmlErrorResponse xmlErrorResponse;
         WSMandateDTOResponse mandateCreateResponse;

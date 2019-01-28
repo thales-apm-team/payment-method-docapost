@@ -57,7 +57,7 @@ public class RefundServiceImpl extends AbstractRefundHttpService<RefundRequest> 
 
         // Recuperation des donnees necessaires pour la generation du Header Basic credentials des appels WS
         String authLogin = refundRequest.getPartnerConfiguration().getProperty(PARTNER_CONFIG_AUTH_LOGIN);
-        String authPass = refundRequest.getPartnerConfiguration().getSensitiveProperties().get(PARTNER_CONFIG_AUTH_PASS);
+        String authPass = refundRequest.getPartnerConfiguration().getProperty(PARTNER_CONFIG_AUTH_PASS);
 
         // Generation des donnees du body de la requete
         String requestBody = sctOrderCreateRequest.buildBody();
