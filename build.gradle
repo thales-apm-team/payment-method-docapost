@@ -16,7 +16,7 @@ apply from: "monext.gradle"
 
 description = 'payment-method-sdd-docapost'
 group = 'com.payline.payment.sdd-docapost'
-version = '1.0-SNAPSHOT'
+version = '1.0-RC1'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
