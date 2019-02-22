@@ -11,8 +11,12 @@ apply plugin: 'maven-publish'
 apply plugin: 'java-library'
 apply plugin: 'jacoco'
 
-apply from: "monext.gradle"
-//apply from: "external.gradle"
+def externalFileName = "$projectDir/.external"
+if (file(externalFileName).exists()) {
+    apply from: "external.gradle"
+} else {
+    apply from: "monext.gradle"
+}
 
 description = 'payment-method-sdd-docapost'
 group = 'com.payline.payment.sdd-docapost'
