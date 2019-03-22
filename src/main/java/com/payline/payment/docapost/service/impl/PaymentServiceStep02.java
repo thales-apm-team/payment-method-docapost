@@ -1,5 +1,6 @@
 package com.payline.payment.docapost.service.impl;
 
+import com.payline.payment.docapost.bean.rest.common.Debtor;
 import com.payline.payment.docapost.bean.rest.request.RequestBuilderFactory;
 import com.payline.payment.docapost.bean.rest.request.mandate.MandateCreateRequest;
 import com.payline.payment.docapost.bean.rest.request.signature.InitiateSignatureRequest;
@@ -169,8 +170,12 @@ public class PaymentServiceStep02 implements PaymentServiceStep {
             requestContextMap.put(CONTEXT_DATA_MANDATE_RUM, this.docapostLocalParam.getMandateRum());
             requestContextMap.put(CONTEXT_DATA_TRANSACTION_ID, this.docapostLocalParam.getTransactionId());
             requestContextMap.put(CONTEXT_DATA_SIGNATURE_ID, this.docapostLocalParam.getSignatureId());
+            // Add IBAN, BIC and countryCode to the request context map. We need them at the end of step 3 (see PAYLAPMEXT-123)
+            requestContextMap.put(CONTEXT_DATA_BIC, this.docapostLocalParam.getMandateCreateBic());
+            requestContextMap.put(CONTEXT_DATA_COUNTRY_CODE, this.docapostLocalParam.getMandateCreateCountryCode());
 
             Map<String, String> sensitiveRequestContextMap = new HashMap<>();
+            sensitiveRequestContextMap.put(CONTEXT_DATA_IBAN, this.docapostLocalParam.getMandateCreateIban());
 
             RequestContext requestContext = RequestContext
                     .RequestContextBuilder
@@ -266,7 +271,13 @@ public class PaymentServiceStep02 implements PaymentServiceStep {
 
                         // Recuperation du parametre mandateRum
                         this.docapostLocalParam.setMandateRum(wsMandateDTOResponse.getRum());
-
+                        // Recover IBAN, BIC and CountryCode from the response (PAYLAPMEXT-123)
+                        if( wsMandateDTOResponse.getDebtor() != null ){
+                            Debtor debtor = wsMandateDTOResponse.getDebtor();
+                            this.docapostLocalParam.setMandateCreateBic( debtor.getBic() );
+                            this.docapostLocalParam.setMandateCreateCountryCode( debtor.getCountryCode() );
+                            this.docapostLocalParam.setMandateCreateIban( debtor.getIban() );
+                        }
                     }
 
                 } else {

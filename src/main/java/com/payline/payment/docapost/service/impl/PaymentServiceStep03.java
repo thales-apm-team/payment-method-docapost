@@ -26,6 +26,8 @@ import com.payline.pmapi.bean.common.FailureCause;
 import com.payline.pmapi.bean.common.Message;
 import com.payline.pmapi.bean.payment.request.PaymentRequest;
 import com.payline.pmapi.bean.payment.response.PaymentResponse;
+import com.payline.pmapi.bean.payment.response.buyerpaymentidentifier.BankAccount;
+import com.payline.pmapi.bean.payment.response.buyerpaymentidentifier.impl.BankTransfer;
 import com.payline.pmapi.bean.payment.response.buyerpaymentidentifier.impl.EmptyTransactionDetails;
 import com.payline.pmapi.bean.payment.response.impl.PaymentResponseFailure;
 import com.payline.pmapi.bean.payment.response.impl.PaymentResponseSuccess;
@@ -35,6 +37,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Locale;
+import java.util.Map;
 
 import static com.payline.payment.docapost.utils.DocapostConstants.*;
 import static com.payline.pmapi.bean.common.Message.MessageType.SUCCESS;
@@ -132,7 +135,7 @@ public class PaymentServiceStep03 implements PaymentServiceStep {
 
             paymentResponse = orderCreate(orderCreateRequest, scheme, host, credentials);
 
-            // Si la reponse a orderCreate est une PaymentResponseFailure, on ne va pas plus loin et on l'a renvoie
+            // Si la reponse a orderCreate est une PaymentResponseFailure, on ne va pas plus loin et on la renvoie
             if (paymentResponse != null && paymentResponse instanceof PaymentResponseFailure) {
                 return paymentResponse;
             }
@@ -149,7 +152,19 @@ public class PaymentServiceStep03 implements PaymentServiceStep {
 
             PaymentResponseSuccessAdditionalData paymentResponseSuccessAdditionalData = DocapostUtils.buildPaymentResponseSuccessAdditionalData(docapostLocalParam);
 
-            Locale locale = paymentRequest.getLocale();
+            // Retrieve BankTransfer data from request context
+            Map<String, String> requestData = paymentRequest.getRequestContext().getRequestData();
+            Map<String, String> sensitiveRequestData = paymentRequest.getRequestContext().getSensitiveRequestData();
+            BankAccount owner = BankAccount.BankAccountBuilder.aBankAccount()
+                    .withAccountNumber("")
+                    .withBankCode("")
+                    .withBankName("")
+                    .withBic( requestData.get( CONTEXT_DATA_BIC ) == null ? "" : requestData.get( CONTEXT_DATA_BIC ) )
+                    .withCountryCode( requestData.get( CONTEXT_DATA_COUNTRY_CODE ) == null ? "" : requestData.get( CONTEXT_DATA_COUNTRY_CODE ) )
+                    .withHolder( "" )
+                    .withIban( sensitiveRequestData.get( CONTEXT_DATA_IBAN ) == null ? "" : sensitiveRequestData.get( CONTEXT_DATA_IBAN ) )
+                    .build();
+            BankTransfer transactionDetails = new BankTransfer( owner, null );
 
             return PaymentResponseSuccess
                     .PaymentResponseSuccessBuilder
@@ -157,8 +172,8 @@ public class PaymentServiceStep03 implements PaymentServiceStep {
                     .withPartnerTransactionId(paymentRequest.getTransactionId())
                     .withTransactionAdditionalData(paymentResponseSuccessAdditionalData.toJson())
                     .withStatusCode(docapostLocalParam.getOrderStatus())
-                    .withMessage(new Message(SUCCESS, this.i18n.getMessage(PAYMENT_RESPONSE_SUCCESS_MESSAGE, locale)))
-                    .withTransactionDetails(new EmptyTransactionDetails())
+                    .withMessage(new Message(SUCCESS, this.i18n.getMessage(PAYMENT_RESPONSE_SUCCESS_MESSAGE, paymentRequest.getLocale())))
+                    .withTransactionDetails(transactionDetails)
                     .build();
 
         } catch (InvalidRequestException e) {

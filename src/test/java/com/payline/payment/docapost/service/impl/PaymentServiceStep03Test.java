@@ -2,10 +2,7 @@ package com.payline.payment.docapost.service.impl;
 
 import com.payline.payment.docapost.bean.PaymentResponseSuccessAdditionalData;
 import com.payline.payment.docapost.bean.rest.request.RequestBuilderFactory;
-import com.payline.payment.docapost.bean.rest.request.mandate.MandateCreateRequest;
 import com.payline.payment.docapost.bean.rest.request.mandate.SddOrderCreateRequest;
-import com.payline.payment.docapost.bean.rest.request.signature.InitiateSignatureRequest;
-import com.payline.payment.docapost.bean.rest.request.signature.SendOtpRequest;
 import com.payline.payment.docapost.bean.rest.request.signature.SetCodeRequest;
 import com.payline.payment.docapost.bean.rest.request.signature.TerminateSignatureRequest;
 import com.payline.payment.docapost.bean.rest.response.error.XmlErrorResponse;
@@ -14,6 +11,7 @@ import com.payline.payment.docapost.bean.rest.response.mandate.WSDDOrderDTORespo
 import com.payline.payment.docapost.exception.InvalidRequestException;
 import com.payline.payment.docapost.utils.DocapostLocalParam;
 import com.payline.payment.docapost.utils.DocapostUtils;
+import com.payline.payment.docapost.utils.PluginUtils;
 import com.payline.payment.docapost.utils.config.ConfigEnvironment;
 import com.payline.payment.docapost.utils.http.DocapostHttpClient;
 import com.payline.payment.docapost.utils.http.StringResponse;
@@ -21,8 +19,8 @@ import com.payline.payment.docapost.utils.type.WSRequestResultEnum;
 import com.payline.pmapi.bean.common.FailureCause;
 import com.payline.pmapi.bean.payment.request.PaymentRequest;
 import com.payline.pmapi.bean.payment.response.PaymentResponse;
+import com.payline.pmapi.bean.payment.response.buyerpaymentidentifier.impl.BankTransfer;
 import com.payline.pmapi.bean.payment.response.impl.PaymentResponseFailure;
-import com.payline.pmapi.bean.payment.response.impl.PaymentResponseFormUpdated;
 import com.payline.pmapi.bean.payment.response.impl.PaymentResponseSuccess;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
@@ -37,12 +35,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.HashMap;
 import java.util.Map;
 
 import static com.payline.payment.docapost.TestUtils.createCompletePaymentRequest;
-import static com.payline.payment.docapost.TestUtils.createCustomPaymentRequestStep3;
-import static com.payline.payment.docapost.service.PaymentServiceStep.DEFAULT_ERROR_CODE;
 import static com.payline.payment.docapost.utils.DocapostConstants.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -64,17 +59,9 @@ public class PaymentServiceStep03Test {
 
     @Before
     public void setup() {
-
         env = ConfigEnvironment.DEV;
-
-        // Initialize docapost local param with data from step 2
         docapostLocalParam = DocapostLocalParam.getInstance();
-        docapostLocalParam.setMandateRum("expMandateRum");
-        docapostLocalParam.setTransactionId("expTransactionId");
-        docapostLocalParam.setSignatureId("expSignatureId");
-
         credentials = "Basic cGF5bGluZUBkb2NhcG9zdC5mcjpKOltlZjhkY2NtYQ==";
-
     }
 
     @Test
@@ -354,12 +341,12 @@ public class PaymentServiceStep03Test {
         Assert.assertEquals(docapostLocalParam.getOrderStatus(), paymentResponseSuccess.getStatusCode());
 
         PaymentResponseSuccessAdditionalData expAdditionalData = DocapostUtils.buildPaymentResponseSuccessAdditionalData(docapostLocalParam);
+        Assert.assertEquals(expAdditionalData.toJson(), paymentResponseSuccess.getTransactionAdditionalData());
 
-        String transactionAdditionalData = paymentResponseSuccess.getTransactionAdditionalData();
-
-        Assert.assertNotNull(paymentResponse);
-        Assert.assertEquals(expAdditionalData.toJson(), transactionAdditionalData);
-
+        // Added for PAYLAPMEXT-123: transaction details must hold the buyer's IBAN
+        Assert.assertTrue( paymentResponseSuccess.getTransactionDetails() instanceof BankTransfer );
+        String iban = ((BankTransfer)paymentResponseSuccess.getTransactionDetails()).getOwner().getIban();
+        Assert.assertFalse( PluginUtils.isEmpty( iban ) );
     }
 
     @Test
@@ -895,6 +882,9 @@ public class PaymentServiceStep03Test {
         paymentRequest.getRequestContext().getRequestData().put(CONTEXT_DATA_MANDATE_RUM, "expMandateRum");
         paymentRequest.getRequestContext().getRequestData().put(CONTEXT_DATA_TRANSACTION_ID, "expTransactionId");
         paymentRequest.getRequestContext().getRequestData().put(CONTEXT_DATA_SIGNATURE_ID, "expSignatureId");
+        paymentRequest.getRequestContext().getRequestData().put(CONTEXT_DATA_BIC, "expBic");
+        paymentRequest.getRequestContext().getRequestData().put(CONTEXT_DATA_COUNTRY_CODE, "expCC");
+        paymentRequest.getRequestContext().getSensitiveRequestData().put(CONTEXT_DATA_IBAN, "expIban");
     }
 
 }

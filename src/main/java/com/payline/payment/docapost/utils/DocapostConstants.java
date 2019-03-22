@@ -103,6 +103,9 @@ public class DocapostConstants {
     public static final String CONTEXT_DATA_STEP = "step";
     public static final String CONTEXT_DATA_STEP_IBAN_PHONE = "IBAN_PHONE";
     public static final String CONTEXT_DATA_STEP_OTP = "OTP";
+    public static final String CONTEXT_DATA_BIC = "bic";
+    public static final String CONTEXT_DATA_COUNTRY_CODE = "countryCode";
+    public static final String CONTEXT_DATA_IBAN = "iban";
     public static final String CONTEXT_DATA_MANDATE_RUM = "mandateRum";
     public static final String CONTEXT_DATA_TRANSACTION_ID = "transactionId";
     public static final String CONTEXT_DATA_SIGNATURE_ID = "signatureId";
