@@ -112,7 +112,7 @@ public class DocapostFormUtils {
         Locale locale = request.getLocale();
         I18nService i18n = I18nService.getInstance();
         String phone = request.getPaymentFormContext().getPaymentFormParameter().get(FORM_FIELD_PHONE);
-        ConfigEnvironment env = PluginUtils.getEnvironnement(request);
+        //ConfigEnvironment env = PluginUtils.getEnvironnement(request);
 
 
 //        PaymentFormDisplayFieldText downloadMandateText = PaymentFormDisplayFieldText

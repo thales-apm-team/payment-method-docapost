@@ -437,26 +437,20 @@ public class PaymentServiceStep03 implements PaymentServiceStep {
 
                     return buildPaymentResponseFailure(Integer.toString(orderCreateStringResponse.getCode()), FailureCause.COMMUNICATION_ERROR);
 
-                } else {
+                } else if (orderCreateXmlResponse != null && !orderCreateXmlResponse.isResultOk()) {
+                    LOGGER.info("SddOrderCreateCreateXmlResponse AbstractXmlResponse instance of XmlErrorResponse");
 
-                    if (orderCreateXmlResponse != null) {
+                    XmlErrorResponse xmlErrorResponse = (XmlErrorResponse) orderCreateXmlResponse;
 
-                        if (!orderCreateXmlResponse.isResultOk()) {
+                    LOGGER.debug("SddOrderCreateCreateXmlResponse error : {}", xmlErrorResponse.toString());
 
-                            LOGGER.info("SddOrderCreateCreateXmlResponse AbstractXmlResponse instance of XmlErrorResponse");
+                    WSRequestResultEnum wsRequestResult = WSRequestResultEnum.fromDocapostErrorCode(xmlErrorResponse.getException().getCode());
 
-                            XmlErrorResponse xmlErrorResponse = (XmlErrorResponse) orderCreateXmlResponse;
-
-                            LOGGER.debug("SddOrderCreateCreateXmlResponse error : {}", xmlErrorResponse.toString());
-
-                            WSRequestResultEnum wsRequestResult = WSRequestResultEnum.fromDocapostErrorCode(xmlErrorResponse.getException().getCode());
-
-                            return buildPaymentResponseFailure(wsRequestResult);
-
-                        }
-
-                    }
-
+                    return buildPaymentResponseFailure(wsRequestResult);
+                }
+                else {
+                    LOGGER.error("An unknown error was raised by the partner");
+                    return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.PARTNER_UNKNOWN_ERROR);
                 }
 
             default:
@@ -468,7 +462,6 @@ public class PaymentServiceStep03 implements PaymentServiceStep {
         }
 
         return null;
-
     }
 
     /**

@@ -296,34 +296,27 @@ public class PaymentServiceStep02 implements PaymentServiceStep {
 
                     return buildPaymentResponseFailure(Integer.toString(mandateCreateStringResponse.getCode()), FailureCause.COMMUNICATION_ERROR);
 
-                } else  {
+                }
+                else if (mandateCreateXmlResponse != null && !mandateCreateXmlResponse.isResultOk() ){
+                    LOGGER.info("MandateCreateXmlResponse AbstractXmlResponse instance of XmlErrorResponse");
 
-                    if (mandateCreateXmlResponse != null) {
+                    XmlErrorResponse xmlErrorResponse = (XmlErrorResponse) mandateCreateXmlResponse;
 
-                        if (!mandateCreateXmlResponse.isResultOk()) {
+                    LOGGER.debug("MandateCreateXmlResponse error : {}", xmlErrorResponse.toString());
 
-                            LOGGER.info("MandateCreateXmlResponse AbstractXmlResponse instance of XmlErrorResponse");
+                    // Retrieve the partner error type
+                    WSRequestResultEnum wsRequestResult = WSRequestResultEnum.fromDocapostErrorCode(xmlErrorResponse.getException().getCode());
 
-                            XmlErrorResponse xmlErrorResponse = (XmlErrorResponse) mandateCreateXmlResponse;
-
-                            LOGGER.debug("MandateCreateXmlResponse error : {}", xmlErrorResponse.toString());
-
-                            // Retrieve the partner error type
-                            WSRequestResultEnum wsRequestResult = WSRequestResultEnum.fromDocapostErrorCode(xmlErrorResponse.getException().getCode());
-
-                            return buildPaymentResponseFailure(wsRequestResult);
-
-                        }
-
-                    }
+                    return buildPaymentResponseFailure(wsRequestResult);
+                }
+                else {
+                    LOGGER.error("An unknown error was raised by the partner");
+                    return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.PARTNER_UNKNOWN_ERROR);
                 }
 
             default:
-
                 LOGGER.error(HTTP_NULL_RESPONSE_ERROR_MESSAGE);
-
                 return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INTERNAL_ERROR);
-
         }
 
         return null;

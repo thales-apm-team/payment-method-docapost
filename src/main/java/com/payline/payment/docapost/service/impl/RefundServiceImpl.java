@@ -79,27 +79,19 @@ public class RefundServiceImpl extends AbstractRefundHttpService<RefundRequest> 
 
         AbstractXmlResponse sctOrderCreateXmlResponse = getSctOrderCreateResponse(response.getContent().trim());
 
-        if (sctOrderCreateXmlResponse != null) {
+        if (sctOrderCreateXmlResponse != null && sctOrderCreateXmlResponse.isResultOk()) {
+            LOGGER.info("SctOrderCreateXmlResponse AbstractXmlResponse instance of WSCTOrderDTOResponse");
 
-            // Just in case but must be true
-            if (sctOrderCreateXmlResponse.isResultOk()) {
+            WSCTOrderDTOResponse sctOrderCreateResponse = (WSCTOrderDTOResponse) sctOrderCreateXmlResponse;
 
-                LOGGER.info("SctOrderCreateXmlResponse AbstractXmlResponse instance of WSCTOrderDTOResponse");
+            LOGGER.debug("SddOrderCreateResponse : {}", sctOrderCreateResponse.toString());
 
-                WSCTOrderDTOResponse sctOrderCreateResponse = (WSCTOrderDTOResponse) sctOrderCreateXmlResponse;
-
-                LOGGER.debug("SddOrderCreateResponse : {}", sctOrderCreateResponse.toString());
-
-                return buildRefundResponseSuccess(sctOrderCreateResponse.getStatus(), sctOrderCreateResponse.getE2eId());
-
-            }
-
+            return buildRefundResponseSuccess(sctOrderCreateResponse.getStatus(), sctOrderCreateResponse.getE2eId());
         }
 
         // case : sctOrderCreateXmlResponse is null
         LOGGER.info("null sctOrderCreateXmlResponse");
         return buildRefundResponseFailure("XML RESPONSE PARSING FAILED", FailureCause.INVALID_DATA);
-
     }
 
     @Override
@@ -107,24 +99,17 @@ public class RefundServiceImpl extends AbstractRefundHttpService<RefundRequest> 
 
         AbstractXmlResponse sctOrderCreateXmlResponse = getSctOrderCreateResponse(response.getContent().trim());
 
-        if (sctOrderCreateXmlResponse != null) {
+        if (sctOrderCreateXmlResponse != null && !sctOrderCreateXmlResponse.isResultOk()) {
+            LOGGER.info("SctOrderCreateXmlResponse AbstractXmlResponse instance of XmlErrorResponse");
 
-            // Just in case but must be true
-            if (!sctOrderCreateXmlResponse.isResultOk()) {
+            XmlErrorResponse xmlErrorResponse = (XmlErrorResponse) sctOrderCreateXmlResponse;
 
-                LOGGER.info("SctOrderCreateXmlResponse AbstractXmlResponse instance of XmlErrorResponse");
+            LOGGER.debug("SddOrderCreateResponse : {}", xmlErrorResponse.toString());
 
-                XmlErrorResponse xmlErrorResponse = (XmlErrorResponse) sctOrderCreateXmlResponse;
+            // Retrieve the partner error type
+            WSRequestResultEnum wsRequestResult = WSRequestResultEnum.fromDocapostErrorCode(xmlErrorResponse.getException().getCode());
 
-                LOGGER.debug("SddOrderCreateResponse : {}", xmlErrorResponse.toString());
-
-                // Retrieve the partner error type
-                WSRequestResultEnum wsRequestResult = WSRequestResultEnum.fromDocapostErrorCode(xmlErrorResponse.getException().getCode());
-
-                return buildPaymentResponseFailure(wsRequestResult);
-
-            }
-
+            return buildPaymentResponseFailure(wsRequestResult);
         }
 
         // case : sctOrderCreateXmlResponse is null
