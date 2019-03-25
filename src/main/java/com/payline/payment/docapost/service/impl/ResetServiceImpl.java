@@ -79,27 +79,19 @@ public class ResetServiceImpl extends AbstractResetHttpService<ResetRequest> imp
 
         AbstractXmlResponse orderCancelXmlResponse = getOrderCancelResponse(response.getContent().trim());
 
-        if (orderCancelXmlResponse != null) {
+        if (orderCancelXmlResponse != null && orderCancelXmlResponse.isResultOk()) {
+            LOGGER.info("OrderCancelXmlResponse AbstractXmlResponse instance of WSCTOrderDTOResponse");
 
-            // Just in case but must be true
-            if (orderCancelXmlResponse.isResultOk()) {
+            WSDDOrderDTOResponse orderCancelResponse = (WSDDOrderDTOResponse) orderCancelXmlResponse;
 
-                LOGGER.info("OrderCancelXmlResponse AbstractXmlResponse instance of WSCTOrderDTOResponse");
+            LOGGER.debug("OrderCancelResponse : {}", () -> orderCancelResponse.toString());
 
-                WSDDOrderDTOResponse orderCancelResponse = (WSDDOrderDTOResponse) orderCancelXmlResponse;
-
-                LOGGER.debug("OrderCancelResponse : {}", orderCancelResponse.toString());
-
-                return buildResetResponseSuccess(orderCancelResponse.getStatus(), orderCancelResponse.getE2eId());
-
-            }
-
+            return buildResetResponseSuccess(orderCancelResponse.getStatus(), orderCancelResponse.getE2eId());
         }
 
         // case : orderCancelXmlResponse is null
         LOGGER.info("null orderCancelXmlResponse");
         return buildResetResponseFailure("XML RESPONSE PARSING FAILED", FailureCause.INVALID_DATA);
-
     }
 
     @Override
@@ -107,24 +99,17 @@ public class ResetServiceImpl extends AbstractResetHttpService<ResetRequest> imp
 
         AbstractXmlResponse orderCancelXmlResponse = getOrderCancelResponse(response.getContent().trim());
 
-        if (orderCancelXmlResponse != null) {
+        if (orderCancelXmlResponse != null && !orderCancelXmlResponse.isResultOk()) {
+            LOGGER.info("OrderCancelXmlResponse AbstractXmlResponse instance of XmlErrorResponse");
 
-            // Just in case but must be true
-            if (!orderCancelXmlResponse.isResultOk()) {
+            XmlErrorResponse xmlErrorResponse = (XmlErrorResponse) orderCancelXmlResponse;
 
-                LOGGER.info("OrderCancelXmlResponse AbstractXmlResponse instance of XmlErrorResponse");
+            LOGGER.debug("OrderCancelResponse : {}", () -> xmlErrorResponse.toString());
 
-                XmlErrorResponse xmlErrorResponse = (XmlErrorResponse) orderCancelXmlResponse;
+            // Retrieve the partner error type
+            WSRequestResultEnum wsRequestResult = WSRequestResultEnum.fromDocapostErrorCode(xmlErrorResponse.getException().getCode());
 
-                LOGGER.debug("OrderCancelResponse : {}", xmlErrorResponse.toString());
-
-                // Retrieve the partner error type
-                WSRequestResultEnum wsRequestResult = WSRequestResultEnum.fromDocapostErrorCode(xmlErrorResponse.getException().getCode());
-
-                return buildResetResponseFailure(wsRequestResult);
-
-            }
-
+            return buildResetResponseFailure(wsRequestResult);
         }
 
         // case : orderCancelXmlResponse is null

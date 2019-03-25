@@ -103,6 +103,9 @@ public class DocapostConstants {
     public static final String CONTEXT_DATA_STEP = "step";
     public static final String CONTEXT_DATA_STEP_IBAN_PHONE = "IBAN_PHONE";
     public static final String CONTEXT_DATA_STEP_OTP = "OTP";
+    public static final String CONTEXT_DATA_BIC = "bic";
+    public static final String CONTEXT_DATA_COUNTRY_CODE = "countryCode";
+    public static final String CONTEXT_DATA_IBAN = "iban";
     public static final String CONTEXT_DATA_MANDATE_RUM = "mandateRum";
     public static final String CONTEXT_DATA_TRANSACTION_ID = "transactionId";
     public static final String CONTEXT_DATA_SIGNATURE_ID = "signatureId";
@@ -121,7 +124,6 @@ public class DocapostConstants {
     public static final String NOFIELDFORM_BUTTON_DESCRIPTION = "form.nofield.button.description";
 
     //Data used by the IbanForm Object
-    public static final String IBAN_TEXT = "form.iban.phone.text.setIban";
     public static final String IBAN_KEY = "formDebtorIban";
     public static final boolean IBAN_REQUIRED = false;
     public static final String IBAN_REQUIRED_ERROR_MESSAGE = "form.iban.phone.text.ibanRequiredErrorMessage";

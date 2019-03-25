@@ -26,6 +26,8 @@ import com.payline.pmapi.bean.common.FailureCause;
 import com.payline.pmapi.bean.common.Message;
 import com.payline.pmapi.bean.payment.request.PaymentRequest;
 import com.payline.pmapi.bean.payment.response.PaymentResponse;
+import com.payline.pmapi.bean.payment.response.buyerpaymentidentifier.BankAccount;
+import com.payline.pmapi.bean.payment.response.buyerpaymentidentifier.impl.BankTransfer;
 import com.payline.pmapi.bean.payment.response.buyerpaymentidentifier.impl.EmptyTransactionDetails;
 import com.payline.pmapi.bean.payment.response.impl.PaymentResponseFailure;
 import com.payline.pmapi.bean.payment.response.impl.PaymentResponseSuccess;
@@ -35,6 +37,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Locale;
+import java.util.Map;
 
 import static com.payline.payment.docapost.utils.DocapostConstants.*;
 import static com.payline.pmapi.bean.common.Message.MessageType.SUCCESS;
@@ -132,7 +135,7 @@ public class PaymentServiceStep03 implements PaymentServiceStep {
 
             paymentResponse = orderCreate(orderCreateRequest, scheme, host, credentials);
 
-            // Si la reponse a orderCreate est une PaymentResponseFailure, on ne va pas plus loin et on l'a renvoie
+            // Si la reponse a orderCreate est une PaymentResponseFailure, on ne va pas plus loin et on la renvoie
             if (paymentResponse != null && paymentResponse instanceof PaymentResponseFailure) {
                 return paymentResponse;
             }
@@ -149,7 +152,19 @@ public class PaymentServiceStep03 implements PaymentServiceStep {
 
             PaymentResponseSuccessAdditionalData paymentResponseSuccessAdditionalData = DocapostUtils.buildPaymentResponseSuccessAdditionalData(docapostLocalParam);
 
-            Locale locale = paymentRequest.getLocale();
+            // Retrieve BankTransfer data from request context
+            Map<String, String> requestData = paymentRequest.getRequestContext().getRequestData();
+            Map<String, String> sensitiveRequestData = paymentRequest.getRequestContext().getSensitiveRequestData();
+            BankAccount owner = BankAccount.BankAccountBuilder.aBankAccount()
+                    .withAccountNumber("")
+                    .withBankCode("")
+                    .withBankName("")
+                    .withBic( requestData.get( CONTEXT_DATA_BIC ) == null ? "" : requestData.get( CONTEXT_DATA_BIC ) )
+                    .withCountryCode( requestData.get( CONTEXT_DATA_COUNTRY_CODE ) == null ? "" : requestData.get( CONTEXT_DATA_COUNTRY_CODE ) )
+                    .withHolder( "" )
+                    .withIban( sensitiveRequestData.get( CONTEXT_DATA_IBAN ) == null ? "" : sensitiveRequestData.get( CONTEXT_DATA_IBAN ) )
+                    .build();
+            BankTransfer transactionDetails = new BankTransfer( owner, null );
 
             return PaymentResponseSuccess
                     .PaymentResponseSuccessBuilder
@@ -157,8 +172,8 @@ public class PaymentServiceStep03 implements PaymentServiceStep {
                     .withPartnerTransactionId(paymentRequest.getTransactionId())
                     .withTransactionAdditionalData(paymentResponseSuccessAdditionalData.toJson())
                     .withStatusCode(docapostLocalParam.getOrderStatus())
-                    .withMessage(new Message(SUCCESS, this.i18n.getMessage(PAYMENT_RESPONSE_SUCCESS_MESSAGE, locale)))
-                    .withTransactionDetails(new EmptyTransactionDetails())
+                    .withMessage(new Message(SUCCESS, this.i18n.getMessage(PAYMENT_RESPONSE_SUCCESS_MESSAGE, paymentRequest.getLocale())))
+                    .withTransactionDetails(transactionDetails)
                     .build();
 
         } catch (InvalidRequestException e) {
@@ -207,7 +222,7 @@ public class PaymentServiceStep03 implements PaymentServiceStep {
             LOGGER.error(HTTP_NULL_RESPONSE_ERROR_MESSAGE);
             return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INTERNAL_ERROR);
         }
-        LOGGER.debug("SetCodeRequest StringResponse : {}", setCodeStringResponse.toString());
+        LOGGER.debug("SetCodeRequest StringResponse : {}", () -> setCodeStringResponse.toString());
 
         switch (ActionRequestResponse.checkResponse(setCodeStringResponse)) {
 
@@ -224,14 +239,14 @@ public class PaymentServiceStep03 implements PaymentServiceStep {
 
                 if (setCodeResponse.isResultOk()) {
 
-                    LOGGER.debug("SetCodeResponse : {}", setCodeResponse.toString());
+                    LOGGER.debug("SetCodeResponse : {}", () -> setCodeResponse.toString());
 
                     // Update du parametre success
                     this.docapostLocalParam.setSignatureSuccess(true);
 
                 } else {
 
-                    LOGGER.debug("SetCodeResponse error : {}", setCodeResponse.getErrors().get(0));
+                    LOGGER.debug("SetCodeResponse error : {}", () -> setCodeResponse.getErrors().get(0));
 
                     return buildPaymentResponseFailure(WSRequestResultEnum.PARTNER_UNKNOWN_ERROR);
 
@@ -291,7 +306,7 @@ public class PaymentServiceStep03 implements PaymentServiceStep {
             LOGGER.error(HTTP_NULL_RESPONSE_ERROR_MESSAGE);
             return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INTERNAL_ERROR);
         }
-        LOGGER.debug("TerminateSignatureRequest StringResponse : {}", terminateSignatureStringResponse.toString());
+        LOGGER.debug("TerminateSignatureRequest StringResponse : {}", () -> terminateSignatureStringResponse.toString());
 
         switch (ActionRequestResponse.checkResponse(terminateSignatureStringResponse)) {
 
@@ -308,13 +323,13 @@ public class PaymentServiceStep03 implements PaymentServiceStep {
 
                 if (terminateSignatureResponse.isResultOk()) {
 
-                    LOGGER.debug("TerminateSignatureResponse : {}", terminateSignatureResponse.toString());
+                    LOGGER.debug("TerminateSignatureResponse : {}", () -> terminateSignatureResponse.toString());
 
                     // Nothing to do
 
                 } else {
 
-                    LOGGER.debug("TerminateSignatureResponse error : {}", terminateSignatureResponse.getErrors().get(0));
+                    LOGGER.debug("TerminateSignatureResponse error : {}", () -> terminateSignatureResponse.getErrors().get(0));
 
                     return buildPaymentResponseFailure(WSRequestResultEnum.PARTNER_UNKNOWN_ERROR);
 
@@ -379,7 +394,7 @@ public class PaymentServiceStep03 implements PaymentServiceStep {
             LOGGER.error(HTTP_NULL_RESPONSE_ERROR_MESSAGE);
             return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INTERNAL_ERROR);
         }
-        LOGGER.debug("SddOrderCreateRequest StringResponse : {}", orderCreateStringResponse.toString());
+        LOGGER.debug("SddOrderCreateRequest StringResponse : {}", () -> orderCreateStringResponse.toString());
 
         responseBody = orderCreateStringResponse.getContent().trim();
 
@@ -402,7 +417,7 @@ public class PaymentServiceStep03 implements PaymentServiceStep {
 
                         WSDDOrderDTOResponse orderCreateResponse = (WSDDOrderDTOResponse) orderCreateXmlResponse;
 
-                        LOGGER.debug("SddOrderCreateRequest : {}", orderCreateResponse.toString());
+                        LOGGER.debug("SddOrderCreateRequest : {}", () -> orderCreateResponse.toString());
 
                         // Nothing to do
                         docapostLocalParam.setOrderStatus(orderCreateResponse.getStatus());
@@ -422,26 +437,20 @@ public class PaymentServiceStep03 implements PaymentServiceStep {
 
                     return buildPaymentResponseFailure(Integer.toString(orderCreateStringResponse.getCode()), FailureCause.COMMUNICATION_ERROR);
 
-                } else {
+                } else if (orderCreateXmlResponse != null && !orderCreateXmlResponse.isResultOk()) {
+                    LOGGER.info("SddOrderCreateCreateXmlResponse AbstractXmlResponse instance of XmlErrorResponse");
 
-                    if (orderCreateXmlResponse != null) {
+                    XmlErrorResponse xmlErrorResponse = (XmlErrorResponse) orderCreateXmlResponse;
 
-                        if (!orderCreateXmlResponse.isResultOk()) {
+                    LOGGER.debug("SddOrderCreateCreateXmlResponse error : {}", () -> xmlErrorResponse.toString());
 
-                            LOGGER.info("SddOrderCreateCreateXmlResponse AbstractXmlResponse instance of XmlErrorResponse");
+                    WSRequestResultEnum wsRequestResult = WSRequestResultEnum.fromDocapostErrorCode(xmlErrorResponse.getException().getCode());
 
-                            XmlErrorResponse xmlErrorResponse = (XmlErrorResponse) orderCreateXmlResponse;
-
-                            LOGGER.debug("SddOrderCreateCreateXmlResponse error : {}", xmlErrorResponse.toString());
-
-                            WSRequestResultEnum wsRequestResult = WSRequestResultEnum.fromDocapostErrorCode(xmlErrorResponse.getException().getCode());
-
-                            return buildPaymentResponseFailure(wsRequestResult);
-
-                        }
-
-                    }
-
+                    return buildPaymentResponseFailure(wsRequestResult);
+                }
+                else {
+                    LOGGER.error("An unknown error was raised by the partner");
+                    return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.PARTNER_UNKNOWN_ERROR);
                 }
 
             default:
@@ -453,7 +462,6 @@ public class PaymentServiceStep03 implements PaymentServiceStep {
         }
 
         return null;
-
     }
 
     /**

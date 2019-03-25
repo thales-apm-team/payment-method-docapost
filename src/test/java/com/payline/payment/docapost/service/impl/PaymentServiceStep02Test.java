@@ -376,23 +376,23 @@ public class PaymentServiceStep02Test {
 
         PaymentResponseFormUpdated paymentResponseFormUpdated = (PaymentResponseFormUpdated) paymentResponse;
 
-        // PaymentResponseFormUpdated.requestContext.requestData must be not null, not empty and must contains 4 data :
+        // PaymentResponseFormUpdated.requestContext.requestData must be not null, not empty and must contain :
         // - the 3 data from the docapostLocalParam (mandateRum, transactionId and signatureId)
         // - the next PaymentService step (OTP)
+        // - the elements from the mandate creation response : IBAN, BIC and countryCode
         Map<String, String> requestData = paymentResponseFormUpdated.getRequestContext().getRequestData();
 
         Assert.assertNotNull(requestData);
-        Assert.assertTrue(!requestData.isEmpty() && requestData.size() == 4);
+        Assert.assertEquals( 6, requestData.size() );
         Assert.assertEquals("expMandateRum", requestData.get(CONTEXT_DATA_MANDATE_RUM));
         Assert.assertEquals("expTransactionId", requestData.get(CONTEXT_DATA_TRANSACTION_ID));
         Assert.assertEquals("expSignatureId", requestData.get(CONTEXT_DATA_SIGNATURE_ID));
         Assert.assertEquals(CONTEXT_DATA_STEP_OTP, requestData.get(CONTEXT_DATA_STEP));
 
-        // PaymentResponseFormUpdated.requestContext.sensitiveRequestData must be not null and empty
+        // PaymentResponseFormUpdated.requestContext.sensitiveRequestData must be not null
         Map<String, String> sensitiveRequestData = paymentResponseFormUpdated.getRequestContext().getSensitiveRequestData();
-
         Assert.assertNotNull(sensitiveRequestData);
-        Assert.assertTrue(sensitiveRequestData.isEmpty());
+        Assert.assertEquals( 1, sensitiveRequestData.size() );
 
         PaymentFormConfigurationResponse paymentFormConfigurationResponse = paymentResponseFormUpdated.getPaymentFormConfigurationResponse();
 
