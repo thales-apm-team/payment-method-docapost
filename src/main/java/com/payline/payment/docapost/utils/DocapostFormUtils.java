@@ -38,25 +38,13 @@ public class DocapostFormUtils {
     public static CustomForm createEmptyIbanPhonePaymentForm(Locale locale) {
         I18nService i18n = I18nService.getInstance();
 
-        PaymentFormDisplayFieldText inputIban = PaymentFormDisplayFieldText
-                .PaymentFormDisplayFieldTextBuilder
-                .aPaymentFormDisplayFieldText()
-                .withContent(i18n.getMessage(OTP_IBAN_PHONE_TEXT_SET_IBAN, locale))
-                .build();
-
         PaymentFormInputFieldIban ibanForm = PaymentFormInputFieldIban
                 .IbanFieldBuilder
                 .anIbanField()
                 .withKey(IBAN_KEY)
-                .withLabel(i18n.getMessage(IBAN_TEXT, locale))
+                .withLabel(i18n.getMessage(OTP_IBAN_PHONE_TEXT_SET_IBAN, locale))
                 .withRequired(IBAN_REQUIRED)
                 .withRequiredErrorMessage(i18n.getMessage(IBAN_REQUIRED_ERROR_MESSAGE, locale))
-                .build();
-
-        PaymentFormDisplayFieldText inputPhone = PaymentFormDisplayFieldText
-                .PaymentFormDisplayFieldTextBuilder
-                .aPaymentFormDisplayFieldText()
-                .withContent(i18n.getMessage(OTP_IBAN_PHONE_TEXT_SET_PHONE, locale))
                 .build();
 
         PaymentFormInputFieldText phoneForm = PaymentFormInputFieldText
@@ -82,9 +70,7 @@ public class DocapostFormUtils {
                 .build();
 
         List<PaymentFormField> customFields = new ArrayList<>();
-        customFields.add(inputIban);
         customFields.add(ibanForm);
-        customFields.add(inputPhone);
         customFields.add(phoneForm);
         customFields.add(inputPhoneInfo);
 
@@ -112,26 +98,6 @@ public class DocapostFormUtils {
         Locale locale = request.getLocale();
         I18nService i18n = I18nService.getInstance();
         String phone = request.getPaymentFormContext().getPaymentFormParameter().get(FORM_FIELD_PHONE);
-        ConfigEnvironment env = PluginUtils.getEnvironnement(request);
-
-
-//        PaymentFormDisplayFieldText downloadMandateText = PaymentFormDisplayFieldText
-//                .PaymentFormDisplayFieldTextBuilder
-//                .aPaymentFormDisplayFieldText()
-//                .withContent(i18n.getMessage(OTP_FORM_TEXT_DOWNLOAD_MANDATE, locale))
-//                .build();
-
-//        PaymentFormDisplayFieldLink downloadMandateLink = PaymentFormDisplayFieldLink
-//                .PaymentFormDisplayFieldLinkBuilder
-//                .aPaymentFormDisplayFieldLink()
-//                .withUrl(getDownloadMandateLinkUrl(
-//                        env,
-//                        sendOtpRequest.getCreditorId(),
-//                        docapostLocalParam.getMandateRum()
-//                ))
-//                .withName(i18n.getMessage(OTP_FORM_LINK_DOWNLOAD_MANDATE, locale))
-//                .withTitle(i18n.getMessage(OTP_FORM_LINK_DOWNLOAD_MANDATE, locale))
-//                .build();
 
         PaymentFormDisplayFieldText otpText = PaymentFormDisplayFieldText
                 .PaymentFormDisplayFieldTextBuilder
@@ -161,20 +127,6 @@ public class DocapostFormUtils {
                 .withValue(OTP_FORM_VALUE)
                 .build();
 
-        //Resend otp pas disponible pour le moment
-//        PaymentFormDisplayFieldLink resendOtpLink = PaymentFormDisplayFieldLink
-//                .PaymentFormDisplayFieldLinkBuilder
-//                .aPaymentFormDisplayFieldLink()
-//                .withUrl(getResendOtpLinkUrl(
-//                        env,
-//                        sendOtpRequest.getCreditorId(),
-//                        docapostLocalParam.getMandateRum(),
-//                        docapostLocalParam.getTransactionId()
-//                ))
-//                .withName(i18n.getMessage(OTP_FORM_TEXT_RESEND_OTP, locale))
-//                .withTitle(i18n.getMessage(OTP_FORM_TEXT_RESEND_OTP, locale))
-//                .build();
-
         PaymentFormInputFieldCheckbox acceptCondition = PaymentFormInputFieldCheckbox
                 .PaymentFormFieldCheckboxBuilder
                 .aPaymentFormFieldCheckbox()
@@ -186,26 +138,11 @@ public class DocapostFormUtils {
                 .withSecured(ACCEPT_CONDITION_SECURED)
                 .build();
 
-//        PaymentFormInputFieldCheckbox saveMandate = PaymentFormInputFieldCheckbox
-//                .PaymentFormFieldCheckboxBuilder
-//                .aPaymentFormFieldCheckbox()
-//                .withRequired(SAVE_MANDATE_REQUIRED)
-//                .withLabel(i18n.getMessage(OTP_FORM_CHECKBOX_SAVE_MANDATE, locale))
-//                .withRequiredErrorMessage(i18n.getMessage(SAVE_MANDATE_REQUIRED_ERROR_MESSAGE, locale))
-//                .withKey(SAVE_MANDATE_KEY)
-//                .withPrechecked(SAVE_MANDATE_PRECHECKED)
-//                .withSecured(SAVE_MANDATE_SECURED)
-//                .build();
-
-
         List<PaymentFormField> customFields = new ArrayList<>();
-//        customFields.add(downloadMandateText);
-//        customFields.add(downloadMandateLink);
         customFields.add(otpText);
         customFields.add(setOtpText);
         customFields.add(otpForm);
         customFields.add(acceptCondition);
-//        customFields.add(saveMandate);
 
         return CustomForm
                 .builder()
@@ -214,8 +151,6 @@ public class DocapostFormUtils {
                 .withButtonText(i18n.getMessage(CUSTOMFORM_TEXT_SIGN, locale))
                 .withDisplayButton(true)
                 .build();
-
-
     }
 
 

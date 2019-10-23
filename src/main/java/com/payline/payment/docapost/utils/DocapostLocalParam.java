@@ -1,5 +1,6 @@
 package com.payline.payment.docapost.utils;
 
+import com.payline.payment.docapost.bean.rest.response.mandate.WSMandateDTOResponse;
 import com.payline.pmapi.bean.payment.request.PaymentRequest;
 
 import static com.payline.payment.docapost.utils.DocapostConstants.*;
@@ -11,6 +12,9 @@ public class DocapostLocalParam {
     private String signatureId;
     private Boolean signatureSuccess;
     private String orderStatus;
+    private String mandateCreateBic;
+    private String mandateCreateCountryCode;
+    private String mandateCreateIban;
 
     private DocapostLocalParam() {
     }
@@ -64,6 +68,30 @@ public class DocapostLocalParam {
 
     public void setOrderStatus(String orderStatus) {
         this.orderStatus = orderStatus;
+    }
+
+    public String getMandateCreateBic() {
+        return mandateCreateBic;
+    }
+
+    public void setMandateCreateBic(String mandateCreateBic) {
+        this.mandateCreateBic = mandateCreateBic;
+    }
+
+    public String getMandateCreateCountryCode() {
+        return mandateCreateCountryCode;
+    }
+
+    public void setMandateCreateCountryCode(String mandateCreateCountryCode) {
+        this.mandateCreateCountryCode = mandateCreateCountryCode;
+    }
+
+    public String getMandateCreateIban() {
+        return mandateCreateIban;
+    }
+
+    public void setMandateCreateIban(String mandateCreateIban) {
+        this.mandateCreateIban = mandateCreateIban;
     }
 
     public void restoreFromPaylineRequest(PaymentRequest request) {

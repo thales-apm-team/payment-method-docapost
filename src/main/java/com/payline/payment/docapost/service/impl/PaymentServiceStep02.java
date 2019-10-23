@@ -1,5 +1,6 @@
 package com.payline.payment.docapost.service.impl;
 
+import com.payline.payment.docapost.bean.rest.common.Debtor;
 import com.payline.payment.docapost.bean.rest.request.RequestBuilderFactory;
 import com.payline.payment.docapost.bean.rest.request.mandate.MandateCreateRequest;
 import com.payline.payment.docapost.bean.rest.request.signature.InitiateSignatureRequest;
@@ -169,8 +170,12 @@ public class PaymentServiceStep02 implements PaymentServiceStep {
             requestContextMap.put(CONTEXT_DATA_MANDATE_RUM, this.docapostLocalParam.getMandateRum());
             requestContextMap.put(CONTEXT_DATA_TRANSACTION_ID, this.docapostLocalParam.getTransactionId());
             requestContextMap.put(CONTEXT_DATA_SIGNATURE_ID, this.docapostLocalParam.getSignatureId());
+            // Add IBAN, BIC and countryCode to the request context map. We need them at the end of step 3 (see PAYLAPMEXT-123)
+            requestContextMap.put(CONTEXT_DATA_BIC, this.docapostLocalParam.getMandateCreateBic());
+            requestContextMap.put(CONTEXT_DATA_COUNTRY_CODE, this.docapostLocalParam.getMandateCreateCountryCode());
 
             Map<String, String> sensitiveRequestContextMap = new HashMap<>();
+            sensitiveRequestContextMap.put(CONTEXT_DATA_IBAN, this.docapostLocalParam.getMandateCreateIban());
 
             RequestContext requestContext = RequestContext
                     .RequestContextBuilder
@@ -239,7 +244,7 @@ public class PaymentServiceStep02 implements PaymentServiceStep {
             LOGGER.error(HTTP_NULL_RESPONSE_ERROR_MESSAGE);
             return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INTERNAL_ERROR);
         }
-        LOGGER.debug("MandateCreateRequest StringResponse  {}", mandateCreateStringResponse.toString());
+        LOGGER.debug("MandateCreateRequest StringResponse  {}", () -> mandateCreateStringResponse.toString());
 
         responseBody = mandateCreateStringResponse.getContent().trim();
 
@@ -262,11 +267,17 @@ public class PaymentServiceStep02 implements PaymentServiceStep {
 
                         WSMandateDTOResponse wsMandateDTOResponse = (WSMandateDTOResponse) mandateCreateXmlResponse;
 
-                        LOGGER.debug("WSMandateDTOResponse : {}", wsMandateDTOResponse.toString());
+                        LOGGER.debug("WSMandateDTOResponse : {}", () -> wsMandateDTOResponse.toString());
 
                         // Recuperation du parametre mandateRum
                         this.docapostLocalParam.setMandateRum(wsMandateDTOResponse.getRum());
-
+                        // Recover IBAN, BIC and CountryCode from the response (PAYLAPMEXT-123)
+                        if( wsMandateDTOResponse.getDebtor() != null ){
+                            Debtor debtor = wsMandateDTOResponse.getDebtor();
+                            this.docapostLocalParam.setMandateCreateBic( debtor.getBic() );
+                            this.docapostLocalParam.setMandateCreateCountryCode( debtor.getCountryCode() );
+                            this.docapostLocalParam.setMandateCreateIban( debtor.getIban() );
+                        }
                     }
 
                 } else {
@@ -285,34 +296,27 @@ public class PaymentServiceStep02 implements PaymentServiceStep {
 
                     return buildPaymentResponseFailure(Integer.toString(mandateCreateStringResponse.getCode()), FailureCause.COMMUNICATION_ERROR);
 
-                } else  {
+                }
+                else if (mandateCreateXmlResponse != null && !mandateCreateXmlResponse.isResultOk() ){
+                    LOGGER.info("MandateCreateXmlResponse AbstractXmlResponse instance of XmlErrorResponse");
 
-                    if (mandateCreateXmlResponse != null) {
+                    XmlErrorResponse xmlErrorResponse = (XmlErrorResponse) mandateCreateXmlResponse;
 
-                        if (!mandateCreateXmlResponse.isResultOk()) {
+                    LOGGER.debug("MandateCreateXmlResponse error : {}", () -> xmlErrorResponse.toString());
 
-                            LOGGER.info("MandateCreateXmlResponse AbstractXmlResponse instance of XmlErrorResponse");
+                    // Retrieve the partner error type
+                    WSRequestResultEnum wsRequestResult = WSRequestResultEnum.fromDocapostErrorCode(xmlErrorResponse.getException().getCode());
 
-                            XmlErrorResponse xmlErrorResponse = (XmlErrorResponse) mandateCreateXmlResponse;
-
-                            LOGGER.debug("MandateCreateXmlResponse error : {}", xmlErrorResponse.toString());
-
-                            // Retrieve the partner error type
-                            WSRequestResultEnum wsRequestResult = WSRequestResultEnum.fromDocapostErrorCode(xmlErrorResponse.getException().getCode());
-
-                            return buildPaymentResponseFailure(wsRequestResult);
-
-                        }
-
-                    }
+                    return buildPaymentResponseFailure(wsRequestResult);
+                }
+                else {
+                    LOGGER.error("An unknown error was raised by the partner");
+                    return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.PARTNER_UNKNOWN_ERROR);
                 }
 
             default:
-
                 LOGGER.error(HTTP_NULL_RESPONSE_ERROR_MESSAGE);
-
                 return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INTERNAL_ERROR);
-
         }
 
         return null;
@@ -354,7 +358,7 @@ public class PaymentServiceStep02 implements PaymentServiceStep {
             LOGGER.error(HTTP_NULL_RESPONSE_ERROR_MESSAGE);
             return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INTERNAL_ERROR);
         }
-        LOGGER.debug("InitiateSignatureRequest StringResponse : {}", initiateSignatureStringResponse.toString());
+        LOGGER.debug("InitiateSignatureRequest StringResponse : {}", () -> initiateSignatureStringResponse.toString());
 
         switch (ActionRequestResponse.checkResponse(initiateSignatureStringResponse)) {
 
@@ -371,14 +375,14 @@ public class PaymentServiceStep02 implements PaymentServiceStep {
 
                 if (initiateSignatureResponse.isResultOk()) {
 
-                    LOGGER.debug("InitiateSignatureResponse : {}", initiateSignatureResponse.toString());
+                    LOGGER.debug("InitiateSignatureResponse : {}", () -> initiateSignatureResponse.toString());
 
                     // Recuperation du parametre transactionId
                     this.docapostLocalParam.setTransactionId(initiateSignatureResponse.getTransactionId());
 
                 } else {
 
-                    LOGGER.debug("InitiateSignatureResponse error : {}", initiateSignatureResponse.getErrors().get(0));
+                    LOGGER.debug("InitiateSignatureResponse error : {}", () -> initiateSignatureResponse.getErrors().get(0));
 
                     return buildPaymentResponseFailure(WSRequestResultEnum.PARTNER_UNKNOWN_ERROR);
 
@@ -439,7 +443,7 @@ public class PaymentServiceStep02 implements PaymentServiceStep {
             LOGGER.error(HTTP_NULL_RESPONSE_ERROR_MESSAGE);
             return buildPaymentResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INTERNAL_ERROR);
         }
-        LOGGER.debug("SendOTPRequest StringResponse : {}", sendOTPStringResponse.toString());
+        LOGGER.debug("SendOTPRequest StringResponse : {}", () -> sendOTPStringResponse.toString());
 
         switch (ActionRequestResponse.checkResponse(sendOTPStringResponse)) {
 
@@ -456,14 +460,14 @@ public class PaymentServiceStep02 implements PaymentServiceStep {
 
                 if (sendOtpResponse.isResultOk()) {
 
-                    LOGGER.debug("SendOTPResponse : {}", sendOtpResponse.toString());
+                    LOGGER.debug("SendOTPResponse : {}", () -> sendOtpResponse.toString());
 
                     // Recuperation du parametre transactionId
                     this.docapostLocalParam.setSignatureId(sendOtpResponse.getSignatureId());
 
                 } else {
 
-                    LOGGER.debug("SendOTPResponse error : {}", sendOtpResponse.getErrors().get(0));
+                    LOGGER.debug("SendOTPResponse error : {}", () -> sendOtpResponse.getErrors().get(0));
 
                     return buildPaymentResponseFailure(WSRequestResultEnum.PARTNER_UNKNOWN_ERROR);
 

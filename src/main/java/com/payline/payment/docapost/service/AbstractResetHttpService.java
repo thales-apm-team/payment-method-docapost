@@ -97,7 +97,7 @@ public abstract class AbstractResetHttpService<T extends ResetRequest> {
                         return this.processResponseFailure(response);
                     }
                 default:
-                    logger.error("The HTTP response or its body is null and should not be");
+                    logger.error(HTTP_NULL_RESPONSE_ERROR_MESSAGE);
                     return buildResetResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INTERNAL_ERROR);
             }
 

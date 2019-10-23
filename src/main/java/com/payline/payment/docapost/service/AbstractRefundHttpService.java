@@ -97,7 +97,7 @@ public abstract class AbstractRefundHttpService<T extends RefundRequest> {
                         return this.processResponseFailure(response);
                     }
                 default:
-                    logger.error("The HTTP response or its body is null and should not be");
+                    logger.error(HTTP_NULL_RESPONSE_ERROR_MESSAGE);
                     return buildRefundResponseFailure(DEFAULT_ERROR_CODE, FailureCause.INTERNAL_ERROR);
             }
 
