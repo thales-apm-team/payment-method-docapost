@@ -3,7 +3,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 plugins {
     id "com.github.johnrengelman.shadow" version "2.0.1"
     id "org.sonarqube" version "2.6.1"
-    id "org.owasp.dependencycheck" version "3.3.1"
+    id "org.owasp.dependencycheck" version "5.2.2"
 }
 
 apply plugin: 'maven'
@@ -20,7 +20,7 @@ if (file(externalFileName).exists()) {
 
 description = 'payment-method-sdd-docapost'
 group = 'com.payline.payment.sdd-docapost'
-version = '1.1'
+version = '1.2-SNAPSHOT'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -71,6 +71,10 @@ dependencies {
 
 dependencyCheck {
     format 'ALL'
+    cve {
+        urlBase = 'https://jindus.intra.monext.fr/nist-data-mirror/nvdcve-1.0-%d.json.gz'
+        urlModified = 'https://jindus.intra.monext.fr/nist-data-mirror/nvdcve-1.0-modified.json.gz'
+    }
 }
 
 assemble.dependsOn shadowJar
